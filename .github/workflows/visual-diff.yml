@@ -1,0 +1,59 @@
+name: Visual diff
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  diff:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: head
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.base_ref }}
+          path: base
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build base and head
+        run: |
+          (cd base && npm install --no-audit --no-fund && npm run build)
+          (cd head && npm install --no-audit --no-fund && npm run build)
+
+      - name: Install browser
+        run: cd head && npx playwright install --with-deps chromium
+
+      - name: Serve, capture and compare
+        run: |
+          (cd base && npx vite preview --port 4173 --strictPort > /tmp/base.log 2>&1 &)
+          (cd head && npx vite preview --port 4174 --strictPort > /tmp/head.log 2>&1 &)
+          for p in 4173 4174; do
+            for i in $(seq 1 30); do curl -sf "http://localhost:$p" > /dev/null && break; sleep 1; done
+          done
+          cd head
+          node scripts/capture.mjs http://localhost:4173 ../screens/base
+          node scripts/capture.mjs http://localhost:4174 ../screens/head
+          node scripts/compare.mjs ../screens/base ../screens/head ../screens/diff
+          cat ../screens/diff/summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: visual-diff
+          path: screens
+
+      - name: Comment on the PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr comment ${{ github.event.pull_request.number }} --repo ${{ github.repository }} \
+            --body-file screens/diff/summary.md --edit-last \
+          || gh pr comment ${{ github.event.pull_request.number }} --repo ${{ github.repository }} \
+            --body-file screens/diff/summary.md

@@ -1,0 +1,31 @@
+{
+  "name": "pebble-pay-sandbox",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Open sandbox showing a token-first design-system migration and an agent-driven PR workflow. Fictional brand, no proprietary code.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview --strictPort",
+    "capture": "node scripts/capture.mjs",
+    "compare": "node scripts/compare.mjs"
+  },
+  "dependencies": {
+    "@radix-ui/react-slot": "1.2.3",
+    "class-variance-authority": "0.7.1",
+    "clsx": "2.1.1",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "tailwind-merge": "3.3.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "4.1.11",
+    "@vitejs/plugin-react": "4.3.4",
+    "pixelmatch": "6.0.0",
+    "playwright": "1.49.1",
+    "pngjs": "7.0.0",
+    "tailwindcss": "4.1.11",
+    "vite": "6.0.7"
+  }
+}

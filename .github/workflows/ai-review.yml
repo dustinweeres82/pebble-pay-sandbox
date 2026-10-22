@@ -1,0 +1,42 @@
+name: AI review
+
+on:
+  pull_request:
+    types: [opened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+  id-token: write
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: anthropics/claude-code-action@v1
+        env:
+          GH_TOKEN: ${{ secrets.AGENT_GITHUB_TOKEN }}
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.AGENT_GITHUB_TOKEN }}
+          prompt: |
+            Review pull request #${{ github.event.pull_request.number }} in ${{ github.repository }}
+            against DESIGN.md and CLAUDE.md. You did not write it; review it as a second pair of eyes.
+
+            Check:
+            - No palette classes (e.g. bg-ocean-600) or `dark:` color variants in src/legacy or src/components/ui.
+            - New tokens are added in all three places (theme_pebble.css light and dark, shadcn_base.css with a fallback, DESIGN.md).
+            - theme_partner.css is untouched.
+            - The PR description says which screenshots should change, and it matches the scope of the change.
+            - The change stays within its ticket.
+
+            Post one concise comment with `gh pr comment` that starts with "AI review:" and lists findings
+            as Pass / Needs attention. Don't approve or request changes.
+          claude_args: |
+            --max-turns 20
+            --allowedTools "Read,Glob,Grep,Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*),Bash(git diff:*),Bash(git log:*)"

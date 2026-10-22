@@ -1,0 +1,62 @@
+name: Agent — implement ticket
+
+# Linear syncs the ticket to a GitHub issue. Adding the `agent` label starts this workflow.
+on:
+  issues:
+    types: [labeled]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  id-token: write
+
+concurrency:
+  group: agent-issue-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  implement:
+    if: github.event.label.name == 'agent'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - run: npm install --no-audit --no-fund
+
+      - uses: anthropics/claude-code-action@v1
+        env:
+          # A personal access token, so the PR it opens triggers the visual-diff and review workflows.
+          GH_TOKEN: ${{ secrets.AGENT_GITHUB_TOKEN }}
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.AGENT_GITHUB_TOKEN }}
+          prompt: |
+            You are the design-system agent for ${{ github.repository }}.
+            Implement GitHub issue #${{ github.event.issue.number }}: "${{ github.event.issue.title }}".
+
+            Issue description:
+            ${{ github.event.issue.body }}
+
+            Do this:
+            1. Read CLAUDE.md and DESIGN.md.
+            2. Take the ticket ID from the issue title (for example PEB-2). Use the base branch named
+               in the issue under "Base branch:" (default: main). Run
+               `git checkout <base> && git checkout -b <ID>-<short-slug>`.
+            3. Make only the change the ticket asks for.
+            4. Run `npm run build`. It must pass.
+            5. Commit as "<ID>: <short summary>" and push the branch.
+            6. Open a draft PR with `gh pr create --draft --base <base>`. Title: "<ID> <summary>".
+               Body: what changed; which screenshots should change (brand · mode · section) or "none";
+               any token value that moved; and "Closes #${{ github.event.issue.number }}".
+            7. Comment on issue #${{ github.event.issue.number }} with the PR link.
+          claude_args: |
+            --max-turns 40
+            --allowedTools "Read,Edit,Write,Glob,Grep,Bash(git:*),Bash(gh:*),Bash(npm run build),Bash(npm install:*)"

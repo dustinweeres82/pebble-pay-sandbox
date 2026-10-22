@@ -1,0 +1,55 @@
+/*
+  Partner brand — a placeholder second theme (think white-label partner).
+  It only defines the shadcn roles.
+*/
+:root[data-brand="partner"] {
+  --background: #fff7f2;
+  --foreground: #3b1d12;
+  --card: #ffffff;
+  --card-foreground: #3b1d12;
+  --primary: #e4572e;
+  --primary-foreground: #ffffff;
+  --secondary: #fff7f2;
+  --secondary-foreground: #e4572e;
+  --muted: #fde8dc;
+  --muted-foreground: #8a4a33;
+  --accent: #fde8dc;
+  --accent-foreground: #3b1d12;
+  --destructive: #b42318;
+  --destructive-foreground: #ffffff;
+  --success: #12b76a;
+  --success-foreground: #ffffff;
+  --warning: #f79009;
+  --warning-foreground: #3b1d12;
+  --info: #2e90fa;
+  --info-foreground: #ffffff;
+  --border: #f5cfbd;
+  --input: #f5cfbd;
+  --ring: #e4572e;
+}
+
+:root[data-brand="partner"][data-theme="dark"] {
+  --background: #24120b;
+  --foreground: #fde8dc;
+  --card: #331a10;
+  --card-foreground: #fde8dc;
+  --primary: #ff7a50;
+  --primary-foreground: #24120b;
+  --secondary: #24120b;
+  --secondary-foreground: #ff7a50;
+  --muted: #3d2015;
+  --muted-foreground: #f2b8a2;
+  --accent: #3d2015;
+  --accent-foreground: #fde8dc;
+  --destructive: #f97066;
+  --destructive-foreground: #24120b;
+  --success: #32d583;
+  --success-foreground: #24120b;
+  --warning: #fdb022;
+  --warning-foreground: #24120b;
+  --info: #53b1fd;
+  --info-foreground: #24120b;
+  --border: #5c2e1d;
+  --input: #5c2e1d;
+  --ring: #ff7a50;
+}
