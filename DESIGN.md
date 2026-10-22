@@ -80,6 +80,25 @@ Shared roles:
 Intent fallbacks: `-hover` mixes 80% intent into `background`, `-active` mixes 85% intent with
 black, `-subtle` mixes 12% intent into `background`, `-emphasis` is the intent itself.
 
+## Legacy ↔ React mapping
+
+| Legacy template | React component | Notes |
+| --- | --- | --- |
+| `button({ theme: "primary", themeColor: "general" })` | `<Button>` | full width at default size |
+| `button({ theme: "secondary", themeColor: "general" })` | `<Button variant="secondary">` (alias `outline`) | background + primary text |
+| `button({ themeColor: "caution" })` | `<Button variant="caution">` | |
+| `button({ themeColor: "destruction" })` | `<Button variant="destructive">` | |
+| `button({ disabled: true })` | `<Button disabled>` | `disabled` tokens |
+| `alert({ theme: "info" })` | `<Alert>` | `AlertIcon` + `AlertContent` (`AlertTitle`, `AlertDescription`) |
+| `alert({ theme: "success" })` | `<Alert variant="success">` | |
+| `alert({ theme: "caution" })` | `<Alert variant="warning">` | |
+| `alert({ theme: "destruction" })` | `<Alert variant="destructive">` | |
+| `badge({ status: "paid" })` | `<Badge variant="success">` | |
+| `badge({ status: "pending" })` | `<Badge variant="warning">` | |
+| `badge({ status: "overdue" })` | `<Badge variant="destructive">` | |
+| `badge({ status: "new" })` | `<Badge variant="info">` | |
+| `textField(...)` input | `<Input>` | `field-*` tokens; label and description spans live in the caller |
+
 ## Rules for code changes
 
 - Write class names in full (Tailwind scans source); no string-built class names.

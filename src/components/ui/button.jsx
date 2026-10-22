@@ -3,24 +3,25 @@ import { Slot } from "@radix-ui/react-slot"
 import { cva } from "class-variance-authority"
 import { cn } from "../../lib/utils"
 
-// shadcn/ui Button (defaults).
+// shadcn/ui Button, restyled to the legacy look with semantic tokens.
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center gap-2.5 whitespace-nowrap rounded-full border-4 text-center text-xl font-semibold transition-colors focus:outline-none focus:border-focus-border hover:border-transparent active:border-transparent hover:text-on-hover active:text-on-active disabled:pointer-events-none disabled:bg-disabled disabled:text-disabled-foreground disabled:border-disabled",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground shadow hover:bg-primary/90",
-        destructive: "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
-        outline: "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground",
-        secondary: "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
+        default: "bg-primary border-primary text-primary-foreground hover:bg-primary-hover active:bg-primary-active",
+        secondary: "bg-background border-primary text-primary hover:bg-primary-hover active:bg-primary-active",
+        outline: "bg-background border-primary text-primary hover:bg-primary-hover active:bg-primary-active",
+        caution: "bg-caution border-caution text-primary-foreground hover:bg-warning-hover active:bg-warning-active",
+        destructive: "bg-destructive border-destructive text-primary-foreground hover:bg-destructive-hover active:bg-destructive-active",
+        ghost: "border-transparent bg-transparent text-primary hover:bg-primary-hover active:bg-primary-active",
+        link: "border-transparent text-primary underline-offset-4 hover:bg-transparent hover:underline",
       },
       size: {
-        default: "h-9 px-4 py-2",
-        sm: "h-8 rounded-md px-3 text-xs",
-        lg: "h-10 rounded-md px-8",
-        icon: "h-9 w-9",
+        default: "w-full px-4 py-3",
+        sm: "px-3 py-1 text-base",
+        lg: "w-full px-8 py-4",
+        icon: "h-12 w-12",
       },
     },
     defaultVariants: { variant: "default", size: "default" },
