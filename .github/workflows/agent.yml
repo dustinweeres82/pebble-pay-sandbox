@@ -57,6 +57,8 @@ jobs:
                Body: what changed; which screenshots should change (brand · mode · section) or "none";
                any token value that moved; and "Closes #${{ github.event.issue.number }}".
             7. Comment on issue #${{ github.event.issue.number }} with the PR link.
-          claude_args: |
-            --max-turns 40
-            --allowedTools "Read,Edit,Write,Glob,Grep,Bash(git:*),Bash(gh:*),Bash(npm run build),Bash(npm install:*)"
+           claude_args: |
+               --max-turns 40
+               --model claude-sonnet-5-5
+               --allowedTools "Read,Edit,Write,Glob,Grep,Bash(git:*),Bash(gh:*),Bash(npm run build),Bash(npm install:*)"
+             show_full_output: true
