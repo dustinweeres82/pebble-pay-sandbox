@@ -49,7 +49,36 @@ Mode and brand are attributes on `<html>`: `data-theme="light|dark"`, `data-bran
 - Intent states: `<intent>-hover`, `<intent>-active` (fills), `<intent>-subtle` (tinted surface),
   `<intent>-emphasis` (accent border/icon on the subtle surface).
 - Shared states: `disabled`, `disabled-foreground`, `on-hover`, `on-active`, `focus-border`.
-- Fields: `field`, `field-border`, `field-focus`.
+- Fields: `field`, `field-border`, `field-focus`, `field-placeholder`.
+
+## Token table (Pebble brand, light → dark)
+
+Intent roles (`primary` ocean, `info` sky, `success` leaf, `warning` sun, `destructive` ember):
+
+| Role | Light | Dark |
+| --- | --- | --- |
+| `<intent>-hover` | `<hue>-200` | `<hue>-200` |
+| `<intent>-active` | `<hue>-700` | `<hue>-600` (warning: `sun-650`) |
+| `<intent>-subtle` | `<hue>-100` | `stone-700` |
+| `<intent>-emphasis` | `<hue>-500` | `<hue>-500` |
+
+Shared roles:
+
+| Role | Light | Dark | Partner fallback |
+| --- | --- | --- | --- |
+| `caution` | `sun-650` | `sun-400` | `warning` |
+| `on-hover` | `stone-800` | `stone-800` | `accent-foreground` |
+| `on-active` | `stone-200` | `stone-900` | `accent-foreground` |
+| `focus-border` | `stone-600` | `stone-50` | `ring` |
+| `disabled` | `stone-200` | `stone-700` | `muted` |
+| `disabled-foreground` | `stone-500` | `stone-400` | `muted-foreground` |
+| `field` | `white` | `stone-900` | `card` |
+| `field-border` | `stone-300` | `stone-700` | `input` |
+| `field-focus` | `sky-600` | `sky-400` | `ring` |
+| `field-placeholder` | `stone-500` | `stone-500` | `muted-foreground` |
+
+Intent fallbacks: `-hover` mixes 80% intent into `background`, `-active` mixes 85% intent with
+black, `-subtle` mixes 12% intent into `background`, `-emphasis` is the intent itself.
 
 ## Rules for code changes
 
