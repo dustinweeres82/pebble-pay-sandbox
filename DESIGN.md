@@ -68,7 +68,7 @@ Mode and brand are attributes on `<html>`: `data-theme="light|dark"`, `data-bran
 | `<intent>-active` | 700 → 600 (`warning` 700 → 650) |
 | `<intent>-subtle` | 100 → stone-700 |
 | `<intent>-emphasis` | 500 → 500 |
-| `caution` | sun-650 → sun-400 (legacy caution buttons; `warning` is sun-600) |
+| `caution` | sun-600 → sun-400 (same as `warning` since PEB-4) |
 | `on-hover`, `on-active` | stone-800, stone-200 → stone-800, stone-900 |
 | `focus-border` | stone-600 → stone-50 |
 | `disabled`, `disabled-foreground` | stone-200, stone-500 → stone-700, stone-400 |
@@ -81,3 +81,9 @@ Mode and brand are attributes on `<html>`: `data-theme="light|dark"`, `data-bran
 - A new role is added in three places: `theme_pebble.css` (light **and** dark), `shadcn_base.css`
   (mapping and a fallback derived from shadcn roles), and this file.
 - Every PR states which screenshots it expects to change. CI posts the visual diff.
+
+## Decisions
+
+- **PEB-4 — One yellow.** Caution buttons used sun-650 while warning badges and alerts used sun-600.
+  `caution` now equals `warning` (sun-600 in light mode). Changes: caution buttons in both columns,
+  Pebble light mode only.

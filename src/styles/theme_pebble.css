@@ -25,7 +25,7 @@
   --ring: var(--color-ocean-600);
 
   /* Design-system roles: values equal what the legacy templates render today. */
-  --caution: var(--color-sun-650);
+  --caution: var(--color-sun-600); /* PEB-4: one yellow — was sun-650 */
   --primary-hover: var(--color-ocean-200);
   --primary-active: var(--color-ocean-700);
   --primary-subtle: var(--color-ocean-100);
