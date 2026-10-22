@@ -23,6 +23,38 @@
   --border: var(--color-stone-200);
   --input: var(--color-stone-200);
   --ring: var(--color-ocean-600);
+
+  /* Intent states and shared roles */
+  --primary-hover: var(--color-ocean-200);
+  --primary-active: var(--color-ocean-700);
+  --primary-subtle: var(--color-ocean-100);
+  --primary-emphasis: var(--color-ocean-500);
+  --info-hover: var(--color-sky-200);
+  --info-active: var(--color-sky-700);
+  --info-subtle: var(--color-sky-100);
+  --info-emphasis: var(--color-sky-500);
+  --success-hover: var(--color-leaf-200);
+  --success-active: var(--color-leaf-700);
+  --success-subtle: var(--color-leaf-100);
+  --success-emphasis: var(--color-leaf-500);
+  --warning-hover: var(--color-sun-200);
+  --warning-active: var(--color-sun-700);
+  --warning-subtle: var(--color-sun-100);
+  --warning-emphasis: var(--color-sun-500);
+  --destructive-hover: var(--color-ember-200);
+  --destructive-active: var(--color-ember-700);
+  --destructive-subtle: var(--color-ember-100);
+  --destructive-emphasis: var(--color-ember-500);
+  --caution: var(--color-sun-650);
+  --on-hover: var(--color-stone-800);
+  --on-active: var(--color-stone-200);
+  --focus-border: var(--color-stone-600);
+  --disabled: var(--color-stone-200);
+  --disabled-foreground: var(--color-stone-500);
+  --field: var(--color-white);
+  --field-border: var(--color-stone-300);
+  --field-focus: var(--color-sky-600);
+  --field-placeholder: var(--color-stone-500);
 }
 
 :root:not([data-brand="partner"])[data-theme="dark"] {
@@ -49,4 +81,36 @@
   --border: var(--color-stone-700);
   --input: var(--color-stone-600);
   --ring: var(--color-ocean-400);
+
+  /* Intent states and shared roles */
+  --primary-hover: var(--color-ocean-200);
+  --primary-active: var(--color-ocean-600);
+  --primary-subtle: var(--color-stone-700);
+  --primary-emphasis: var(--color-ocean-500);
+  --info-hover: var(--color-sky-200);
+  --info-active: var(--color-sky-600);
+  --info-subtle: var(--color-stone-700);
+  --info-emphasis: var(--color-sky-500);
+  --success-hover: var(--color-leaf-200);
+  --success-active: var(--color-leaf-600);
+  --success-subtle: var(--color-stone-700);
+  --success-emphasis: var(--color-leaf-500);
+  --warning-hover: var(--color-sun-200);
+  --warning-active: var(--color-sun-650);
+  --warning-subtle: var(--color-stone-700);
+  --warning-emphasis: var(--color-sun-500);
+  --destructive-hover: var(--color-ember-200);
+  --destructive-active: var(--color-ember-600);
+  --destructive-subtle: var(--color-stone-700);
+  --destructive-emphasis: var(--color-ember-500);
+  --caution: var(--color-sun-400);
+  --on-hover: var(--color-stone-800);
+  --on-active: var(--color-stone-900);
+  --focus-border: var(--color-stone-50);
+  --disabled: var(--color-stone-700);
+  --disabled-foreground: var(--color-stone-400);
+  --field: var(--color-stone-900);
+  --field-border: var(--color-stone-700);
+  --field-focus: var(--color-sky-400);
+  --field-placeholder: var(--color-stone-500);
 }

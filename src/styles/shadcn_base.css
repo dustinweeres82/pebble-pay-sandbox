@@ -27,4 +27,70 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-active: var(--primary-active);
+  --color-primary-subtle: var(--primary-subtle);
+  --color-primary-emphasis: var(--primary-emphasis);
+  --color-info-hover: var(--info-hover);
+  --color-info-active: var(--info-active);
+  --color-info-subtle: var(--info-subtle);
+  --color-info-emphasis: var(--info-emphasis);
+  --color-success-hover: var(--success-hover);
+  --color-success-active: var(--success-active);
+  --color-success-subtle: var(--success-subtle);
+  --color-success-emphasis: var(--success-emphasis);
+  --color-warning-hover: var(--warning-hover);
+  --color-warning-active: var(--warning-active);
+  --color-warning-subtle: var(--warning-subtle);
+  --color-warning-emphasis: var(--warning-emphasis);
+  --color-destructive-hover: var(--destructive-hover);
+  --color-destructive-active: var(--destructive-active);
+  --color-destructive-subtle: var(--destructive-subtle);
+  --color-destructive-emphasis: var(--destructive-emphasis);
+  --color-caution: var(--caution);
+  --color-on-hover: var(--on-hover);
+  --color-on-active: var(--on-active);
+  --color-focus-border: var(--focus-border);
+  --color-disabled: var(--disabled);
+  --color-disabled-foreground: var(--disabled-foreground);
+  --color-field: var(--field);
+  --color-field-border: var(--field-border);
+  --color-field-focus: var(--field-focus);
+  --color-field-placeholder: var(--field-placeholder);
+}
+
+/* Fallbacks for brands that only define shadcn roles (e.g. Partner). Brands that set a role win. */
+@layer base {
+  :root {
+    --primary-hover: color-mix(in oklab, var(--primary) 80%, var(--background));
+    --primary-active: color-mix(in oklab, var(--primary) 85%, black);
+    --primary-subtle: color-mix(in oklab, var(--primary) 12%, var(--background));
+    --primary-emphasis: var(--primary);
+    --info-hover: color-mix(in oklab, var(--info) 80%, var(--background));
+    --info-active: color-mix(in oklab, var(--info) 85%, black);
+    --info-subtle: color-mix(in oklab, var(--info) 12%, var(--background));
+    --info-emphasis: var(--info);
+    --success-hover: color-mix(in oklab, var(--success) 80%, var(--background));
+    --success-active: color-mix(in oklab, var(--success) 85%, black);
+    --success-subtle: color-mix(in oklab, var(--success) 12%, var(--background));
+    --success-emphasis: var(--success);
+    --warning-hover: color-mix(in oklab, var(--warning) 80%, var(--background));
+    --warning-active: color-mix(in oklab, var(--warning) 85%, black);
+    --warning-subtle: color-mix(in oklab, var(--warning) 12%, var(--background));
+    --warning-emphasis: var(--warning);
+    --destructive-hover: color-mix(in oklab, var(--destructive) 80%, var(--background));
+    --destructive-active: color-mix(in oklab, var(--destructive) 85%, black);
+    --destructive-subtle: color-mix(in oklab, var(--destructive) 12%, var(--background));
+    --destructive-emphasis: var(--destructive);
+    --caution: var(--warning);
+    --on-hover: var(--accent-foreground);
+    --on-active: var(--accent-foreground);
+    --focus-border: var(--ring);
+    --disabled: var(--muted);
+    --disabled-foreground: var(--muted-foreground);
+    --field: var(--card);
+    --field-border: var(--input);
+    --field-focus: var(--ring);
+    --field-placeholder: var(--muted-foreground);
+  }
 }
