@@ -49,7 +49,22 @@ Mode and brand are attributes on `<html>`: `data-theme="light|dark"`, `data-bran
 - Intent states: `<intent>-hover`, `<intent>-active` (fills), `<intent>-subtle` (tinted surface),
   `<intent>-emphasis` (accent border/icon on the subtle surface).
 - Shared states: `disabled`, `disabled-foreground`, `on-hover`, `on-active`, `focus-border`.
-- Fields: `field`, `field-border`, `field-focus`.
+- Fields: `field`, `field-border`, `field-focus`, `field-placeholder`.
+
+## Token values (Pebble, light → dark)
+
+| Token | Value |
+| --- | --- |
+| `<intent>-hover` | 200 → 200 (`primary` ocean, `info` sky, `success` leaf, `warning` sun, `destructive` ember) |
+| `<intent>-active` | 700 → 600 (`warning` 700 → 650) |
+| `<intent>-subtle` | 100 → stone-700 |
+| `<intent>-emphasis` | 500 → 500 |
+| `caution` | sun-650 → sun-400 (legacy caution buttons; `warning` is sun-600) |
+| `on-hover`, `on-active` | stone-800, stone-200 → stone-800, stone-900 |
+| `focus-border` | stone-600 → stone-50 |
+| `disabled`, `disabled-foreground` | stone-200, stone-500 → stone-700, stone-400 |
+| `field`, `field-border`, `field-focus` | white, stone-300, sky-600 → stone-900, stone-700, sky-400 |
+| `field-placeholder` | stone-500 → stone-500 |
 
 ## Rules for code changes
 
