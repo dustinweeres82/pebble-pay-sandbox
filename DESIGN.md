@@ -42,6 +42,15 @@ Mode and brand are attributes on `<html>`: `data-theme="light|dark"`, `data-bran
 4. **Design changes, through tokens.** One decision per PR (e.g. one yellow instead of two).
    Expected: the change appears in both columns at once.
 
+## Components (legacy ↔ React)
+
+| Legacy template | React (shadcn) | Notes |
+| --- | --- | --- |
+| `button({ theme: "primary", themeColor })` | `<Button variant>` | general → `default`, secondary theme → `secondary`, caution → `caution`, destruction → `destructive` |
+| `alert({ theme })` | `<Alert variant>` + `AlertIcon`, `AlertTitle`, `AlertDescription` | info → `default`, caution → `warning` |
+| `badge({ status })` | `<Badge variant>` | paid → `success`, pending → `warning`, overdue → `destructive`, new → `info` |
+| `textField(...)` | `<Input>` inside a label | |
+
 ## Token naming
 
 - CSS variable `--<role>`; Tailwind utility `bg-<role>` / `text-<role>` / `border-<role>`.
