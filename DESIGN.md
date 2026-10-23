@@ -49,7 +49,35 @@ Mode and brand are attributes on `<html>`: `data-theme="light|dark"`, `data-bran
 - Intent states: `<intent>-hover`, `<intent>-active` (fills), `<intent>-subtle` (tinted surface),
   `<intent>-emphasis` (accent border/icon on the subtle surface).
 - Shared states: `disabled`, `disabled-foreground`, `on-hover`, `on-active`, `focus-border`.
-- Fields: `field`, `field-border`, `field-focus`.
+- Fields: `field`, `field-border`, `field-focus`, `field-placeholder`.
+- Text accent: `caution` (warning-coloured text on the page surface).
+
+## Token table (Pebble, light → dark)
+
+Palette steps. Intents: `primary` ocean, `info` sky, `success` leaf, `warning` sun,
+`destructive` ember. Each intent has the four roles below, with `<c>` its palette colour.
+
+| Role | Light | Dark |
+| --- | --- | --- |
+| `<intent>-hover` | `<c>-200` | `<c>-200` |
+| `<intent>-active` | `<c>-700` (warning: `sun-700`) | `<c>-600` (warning: `sun-650`) |
+| `<intent>-subtle` | `<c>-100` | `stone-700` |
+| `<intent>-emphasis` | `<c>-500` | `<c>-500` |
+| `caution` | `sun-650` | `sun-400` |
+| `on-hover` | `stone-800` | `stone-800` |
+| `on-active` | `stone-200` | `stone-900` |
+| `focus-border` | `stone-600` | `stone-50` |
+| `disabled` | `stone-200` | `stone-700` |
+| `disabled-foreground` | `stone-500` | `stone-400` |
+| `field` | `white` | `stone-900` |
+| `field-border` | `stone-300` | `stone-700` |
+| `field-focus` | `sky-600` | `sky-400` |
+| `field-placeholder` | `stone-500` | `stone-500` |
+
+Brands that define only shadcn roles (Partner) get fallbacks derived from them in
+`shadcn_base.css` (`@layer base`): hover/active/subtle mix the intent with background/foreground,
+emphasis equals the intent, and the shared roles map to `accent-foreground`, `foreground`, `ring`,
+`muted`, `muted-foreground`, `card` and `input`.
 
 ## Rules for code changes
 
