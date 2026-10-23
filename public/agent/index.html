@@ -149,6 +149,8 @@ table.vd td:last-child { text-align: right; font-family: var(--mono); color: var
 details.custom { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 12px; }
 details.custom summary { font-size: 14px; font-weight: 600; color: var(--ink); }
 .btn:disabled { opacity: .6; cursor: progress; }
+.sandbox-link { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; margin-bottom: 12px; }
+.sandbox-link .mono { color: var(--ink-3); overflow-wrap: anywhere; }
 .foot { margin-top: 28px; font-size: 12px; color: var(--ink-3); display: flex; flex-wrap: wrap; gap: 6px 16px; }
 
 @media (max-width: 860px) {
@@ -285,7 +287,15 @@ async function liveModel(key, startedAt) {
   if (vd) part.visual = parseVisual(vd.body, vd.html_url);
   const ai = [...comments].reverse().find(c => /^\s*\**ai review/i.test(c.body || ""));
   if (ai) part.review = { text: ai.body, url: ai.html_url };
-  if (deps.length) {
+  // Vercel posts a comment on the PR with the preview link. That's the most reliable source,
+  // because this project doesn't create GitHub Deployments.
+  const vc = [...comments].reverse().find(c => /vercel/i.test(c.user?.login || "") && /\[Preview\]\(/.test(c.body || ""));
+  if (vc) {
+    const url = (vc.body.match(/\[Preview\]\((https:\/\/[^)\s]+)\)/) || [])[1];
+    const log = (vc.body.match(/(?<!!)\[(?:Ready|Building|Queued|Error|Canceled)\]\((https:\/\/vercel\.com\/(?!static\/)[^)\s]+)\)/) || [])[1];
+    const ready = /status\/ready\.svg|\bReady\]/.test(vc.body), failed = /status\/error|\bError\]/.test(vc.body);
+    part.preview = ready && url ? { url, log } : { pending: !failed, failed, log, url: null, branchUrl: url };
+  } else if (deps.length) {
     const st = await api(`/deployments/${deps[0].id}/statuses?per_page=5`);
     const ok = st.find(s => s.environment_url && s.state === "success");
     part.preview = ok ? { url: ok.environment_url } : { pending: true, state: st[0]?.state || "pending" };
@@ -354,9 +364,10 @@ function stages(m) {
   S.push(r);
   let p = { key: "preview", name: "Preview" };
   if (!pr) Object.assign(p, { state: "todo", desc: "Vercel builds a preview of the PR." });
-  else if (m.preview?.url) Object.assign(p, { state: "done", desc: "Click through the change below, in either brand and mode." });
-  else Object.assign(p, { state: m.preview?.pending || (m.checks || []).some(c => /vercel/i.test(c.name)) ? "active" : "todo",
-    desc: m.preview?.pending ? "Vercel is building the preview…" : "No preview yet. If this repo isn't connected to Vercel, the preview step stays empty." });
+  else if (m.preview?.url) Object.assign(p, { state: "done", desc: "The PR is live in its own sandbox. Open it, or click through it below in either brand and mode." });
+  else if (m.preview?.failed) Object.assign(p, { state: "fail", desc: "The Vercel build for this PR failed. Open the build log to see why." });
+  else Object.assign(p, { state: "active",
+    desc: m.preview?.pending ? "Vercel is building the sandbox for this PR…" : "Waiting for Vercel to post the sandbox link on the PR. This usually takes under a minute." });
   S.push(p);
   let s = { key: "ship", name: "Ship" };
   if (!pr) Object.assign(s, { state: "todo", desc: "You review and merge." });
@@ -525,7 +536,7 @@ function drawRun(m) {
     m.issue && `<a class="btn sm" href="${m.issue.html_url}" target="_blank" rel="noopener">Issue #${m.issue.number}</a>`,
     m.run && `<a class="btn sm" href="${m.run.html_url}" target="_blank" rel="noopener">Agent log</a>`,
     m.pr && `<a class="btn sm" href="${m.pr.html_url}" target="_blank" rel="noopener">PR #${m.pr.number}</a>`,
-    m.preview?.url && !m.preview.demo && `<a class="btn sm primary" href="${m.preview.url}" target="_blank" rel="noopener">Open preview ↗</a>`,
+    m.preview?.url && !m.preview.demo && `<a class="btn sm primary" href="${m.preview.url}" target="_blank" rel="noopener">Open sandbox ↗</a>`,
     auth.signedIn && m.issue && m.run && m.run.status === "completed" && !(m.pr && m.pr.merged_at) && `<button class="btn sm" id="again">Run again</button>`].filter(Boolean).join("");
   const again = $("#again"); if (again) again.onclick = () => runAgain(m, again);
   $("#rail").innerHTML = S.map((s, i) => `<li class="${s.key === cur ? "cur" : ""}"><a href="#run/${encodeURIComponent(m.id)}" data-jump="${s.key}"><span class="st ${s.state}">${s.state === "active" ? "" : ICON[s.state] || i + 1}</span>${s.name}</a></li>`).join("");
@@ -568,15 +579,22 @@ function previewURL(m) {
   return `${u}/?brand=${prevOpts.brand}&theme=${prevOpts.theme}`;
 }
 function previewHTML(m) {
-  if (!m.preview?.url) return `<div class="frame"><div class="placeholder">${m.preview?.pending ? "Building the preview…" : "Waiting for a Vercel preview."}</div></div>`;
+  if (!m.preview?.url) {
+    const p = m.preview || {};
+    const msg = p.failed ? "The Vercel build failed." : p.pending ? "Vercel is building the sandbox…" : "Waiting for Vercel to post the sandbox link on the PR.";
+    return `<div class="frame"><div class="placeholder">${msg}${p.log ? `<br><a href="${esc(p.log)}" target="_blank" rel="noopener">Vercel build log ↗</a>` : ""}</div></div>`;
+  }
   const b = (k, v, label) => `<button data-${k}="${v}" aria-pressed="${prevOpts[k] === v}">${label}</button>`;
-  return `<div class="preview"><div class="bar">
+  return `<div class="preview">
+    ${m.preview.demo ? "" : `<div class="sandbox-link"><a class="btn primary" href="${previewURL(m)}" target="_blank" rel="noopener">Open sandbox ↗</a>
+      <span class="mono">${esc(m.preview.url.replace(/^https:\/\//, ""))}</span></div>`}
+    <div class="bar">
       <span style="display:flex;gap:8px;flex-wrap:wrap"><span class="seg">${b("brand", "pebble", "Pebble")}${b("brand", "partner", "Partner")}</span>
       <span class="seg">${b("theme", "light", "Light")}${b("theme", "dark", "Dark")}</span>
       <span class="seg">${b("size", "desktop", "Desktop")}${b("size", "mobile", "Mobile")}</span></span>
-      ${m.preview.demo ? "" : `<a class="small" href="${previewURL(m)}" target="_blank" rel="noopener">Open in a new tab ↗</a>`}</div>
+      ${m.preview.log ? `<a class="small" href="${esc(m.preview.log)}" target="_blank" rel="noopener">Vercel build ↗</a>` : ""}</div>
     <div class="frame ${prevOpts.size}">${m.preview.demo ? `<div class="placeholder">In a live run, the Vercel preview of the PR loads here.</div>` : `<iframe id="pframe" title="Preview of the PR" src="${previewURL(m)}"></iframe>`}</div>
-    <p class="small muted" style="margin:8px 0 0">Blank frame? Vercel's preview protection blocks embedding. Turn it off for this sandbox under Vercel → Settings → Deployment Protection, or use “Open in a new tab”.</p></div>`;
+    <p class="small muted" style="margin:8px 0 0">Seeing a Vercel login instead of the app? Preview protection blocks embedding. Turn off Vercel Authentication for this project under Settings → Deployment Protection, or use Open sandbox.</p></div>`;
 }
 function wirePreview(m) {
   document.querySelectorAll(".preview [data-brand],.preview [data-theme],.preview [data-size]").forEach(btn => btn.onclick = () => {
