@@ -135,6 +135,20 @@ table.vd td:last-child { text-align: right; font-family: var(--mono); color: var
 .frame iframe { border: 0; width: 100%; height: 640px; background: #fff; transition: width .25s; }
 .frame.mobile iframe { width: 390px; max-width: 100%; }
 .placeholder { padding: 40px 20px; text-align: center; color: var(--ink-3); font-size: 14px; width: 100%; }
+.auth { display: flex; gap: 8px; align-items: center; }
+.me { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; font-weight: 600; color: var(--ink-2); }
+.me img { width: 22px; height: 22px; border-radius: 50%; }
+.runs .row { display: flex; gap: 10px; align-items: center; justify-content: space-between; padding: 10px 4px; border-top: 1px solid var(--line); }
+.runs .row:hover { background: var(--sunken); }
+.runs a.tt { display: block; padding: 0; border: 0; color: var(--ink); text-decoration: none; min-width: 0; flex: 1; }
+.runs a.tt:hover { background: none; }
+.runs a.tt > span { display: block; }
+.runs li { border: 0; }
+.runs .lk { color: var(--accent); cursor: pointer; }
+.runs .lk:hover { text-decoration: underline; }
+details.custom { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 12px; }
+details.custom summary { font-size: 14px; font-weight: 600; color: var(--ink); }
+.btn:disabled { opacity: .6; cursor: progress; }
 .foot { margin-top: 28px; font-size: 12px; color: var(--ink-3); display: flex; flex-wrap: wrap; gap: 6px 16px; }
 
 @media (max-width: 860px) {
@@ -152,6 +166,7 @@ table.vd td:last-child { text-align: right; font-family: var(--mono); color: var
   <span class="repo" id="repoLabel"></span>
   <span class="sp"></span>
   <span class="pill" id="live" title="GitHub API calls left this hour">…</span>
+  <span class="auth" id="auth"></span>
 </div>
 <div class="page" id="app"></div>
 
@@ -174,10 +189,33 @@ const store = { get(k, d) { try { return JSON.parse(localStorage.getItem(k)) ?? 
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} } };
 
 /* ---------------- GitHub API (conditional requests; 304s don't use up the rate limit) ---------------- */
+/* Signed in: calls go through /api/gh as you (5,000 an hour, and the console can add labels).
+   Signed out: anonymous calls straight to GitHub (60 an hour, read-only). */
+let auth = { available: false, signedIn: false };
+async function loadAuth() {
+  if (DEMO) return;
+  try {
+    const r = await fetch("/api/me", { cache: "no-store" });
+    const ct = r.headers.get("content-type") || "";
+    if (!ct.includes("json")) return; // no functions here (for example plain `npm run dev`)
+    const j = await r.json();
+    auth = { available: j.configured !== false, signedIn: !!j.signedIn, login: j.login, avatar: j.avatar };
+  } catch {}
+}
+function drawAuth() {
+  const el = $("#auth");
+  if (DEMO || !auth.available) { el.innerHTML = ""; return; }
+  el.innerHTML = auth.signedIn
+    ? `<span class="me">${auth.avatar ? `<img src="${esc(auth.avatar)}&s=48" alt="">` : ""}${esc(auth.login || "")}</span><a class="btn sm" href="/api/logout">Sign out</a>`
+    : `<a class="btn sm primary" href="/api/login">Sign in with GitHub</a>`;
+}
 const cache = new Map();
 let rate = { left: null, reset: null };
+function ghURL(path) {
+  return auth.signedIn ? "/api/gh?path=" + encodeURIComponent(`/repos/${REPO}${path}`) : GH + path;
+}
 async function api(path) {
-  const url = path.startsWith("http") ? path : GH + path;
+  const url = ghURL(path);
   const hit = cache.get(url);
   const headers = { Accept: "application/vnd.github+json" };
   if (hit?.etag) headers["If-None-Match"] = hit.etag;
@@ -185,30 +223,48 @@ async function api(path) {
   const left = res.headers.get("x-ratelimit-remaining"), reset = res.headers.get("x-ratelimit-reset");
   if (left !== null) rate = { left: +left, reset: +reset * 1000 };
   if (res.status === 304 && hit) return hit.data;
-  if (res.status === 403 || res.status === 429) throw new Error("rate");
+  if (res.status === 401 && auth.signedIn) { auth.signedIn = false; drawAuth(); return api(path); } // session ended: fall back
+  if (res.status === 403 || res.status === 429) throw new Error(left === "0" ? "rate" : `GitHub ${res.status} for ${path}`);
   if (!res.ok) throw new Error(`GitHub ${res.status} for ${path}`);
   const data = await res.json();
   cache.set(url, { etag: res.headers.get("etag"), data });
   return data;
 }
+async function apiWrite(method, path, body) {
+  if (!auth.signedIn) throw new Error("Sign in with GitHub first.");
+  const res = await fetch(ghURL(path), { method, headers: { "Content-Type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
+  if (res.status === 404 && method === "DELETE") return null; // label already gone
+  if (!res.ok) { const j = await res.json().catch(() => ({})); throw new Error(j.message || `GitHub ${res.status}`); }
+  return res.status === 204 ? null : res.json();
+}
 
 /* ---------------- Find the pieces of one run ---------------- */
+// A run is keyed by issue number ("12") or, for issues started while signed out, by ticket ID ("REQ-1234").
+function ticketId(issue) {
+  const t = issue.title.match(/^([A-Z][A-Z0-9]+-\d+)\b/), b = (issue.body || "").match(/Ticket:\s*([A-Z][A-Z0-9]+-\d+)/),
+    l = (issue.body || "").match(/linear\.app\/[^/\s]+\/issue\/([A-Z][A-Z0-9]+-\d+)/i);
+  return (t || b || l || [])[1] || null;
+}
+function linearURL(issue) { const m = (issue.body || "").match(/https:\/\/linear\.app\/[^\s)\]]+/); return m ? m[0] : null; }
 function matchesTicket(issue, id) {
   return issue.title.startsWith(id + " ") || issue.title === id || (issue.body || "").includes(`Ticket: ${id}`);
 }
 const frozen = {}; // parts of a run that can't change any more, so we stop asking GitHub for them
-async function liveModel(id, startedAt) {
-  const f = frozen[id] || (frozen[id] = {});
-  const m = { id, startedAt };
+async function liveModel(key, startedAt) {
+  const f = frozen[key] || (frozen[key] = {});
+  const m = { id: key, startedAt };
   if (!f.issue) {
-    const issues = (await api(`/issues?labels=agent&state=all&sort=created&direction=desc&per_page=20`)).filter(i => !i.pull_request);
-    f.issue = issues.find(i => matchesTicket(i, id));
+    if (/^\d+$/.test(key)) f.issue = await api(`/issues/${key}`);
+    else f.issue = (await api(`/issues?labels=agent&state=all&sort=created&direction=desc&per_page=20`)).filter(i => !i.pull_request).find(i => matchesTicket(i, key));
   }
   m.issue = f.issue;
   if (!m.issue) return m;
+  if (!(m.issue.labels || []).some(l => (l.name || l) === "agent")) { m.needsLabel = true; delete f.issue; }
+  m.id = ticketId(m.issue) || `#${m.issue.number}`;
+  const since = new Date(startedAt || m.issue.created_at) - 15000;
   if (!f.run) {
     const runs = (await api(`/actions/workflows/agent.yml/runs?event=issues&per_page=20`)).workflow_runs || [];
-    m.run = runs.find(r => r.display_title === m.issue.title && new Date(r.created_at) >= new Date(m.issue.created_at) - 5000);
+    m.run = runs.find(r => r.display_title === m.issue.title && new Date(r.created_at) >= since);
     if (m.run) {
       const jobs = (await api(`/actions/runs/${m.run.id}/jobs`)).jobs || [];
       m.steps = (jobs[0]?.steps || []).map(s => ({ name: s.name, status: s.status, conclusion: s.conclusion, started: s.started_at, done: s.completed_at }));
@@ -217,7 +273,7 @@ async function liveModel(id, startedAt) {
   } else { m.run = f.run; m.steps = f.steps; }
   if (!m.run || m.run.status !== "completed") return m;
   const pulls = await api(`/pulls?state=all&sort=created&direction=desc&per_page=20`);
-  m.pr = pulls.find(p => (p.body || "").includes(`#${m.issue.number}`) || p.title.startsWith(id + " "));
+  m.pr = pulls.find(p => new Date(p.created_at) >= since && (new RegExp(`#${m.issue.number}\\b`).test(p.body || "") || p.title.startsWith(m.id + " ")));
   if (!m.pr) return m;
   const sha = m.pr.head.sha;
   if (f.checksFor === sha) { Object.assign(m, f.checksPart); return m; }
@@ -278,9 +334,10 @@ function stages(m) {
   const run = m.run, pr = m.pr;
   S.push({ key: "request", name: "Request",
     state: m.issue ? "done" : "active",
-    desc: m.issue ? `Issue #${m.issue.number} created ${ago(m.issue.created_at)} with the agent label.` : "Waiting for the GitHub issue. Submit it in the tab that opened." });
+    desc: m.issue ? `Ticket ${m.id} is issue #${m.issue.number}${m.needsLabel ? "" : ", with the agent label"}.` : "Waiting for the GitHub issue. Submit it in the tab that opened." });
   let b = { key: "build", name: "Build" };
   if (!m.issue) Object.assign(b, { state: "todo", desc: "The agent starts when the issue exists." });
+  else if (!run && m.needsLabel) Object.assign(b, { state: "wait", desc: `Add the agent label to issue #${m.issue.number}, in Linear or on GitHub. The agent starts as soon as it's there.` });
   else if (!run) Object.assign(b, { state: "active", desc: "Waiting for GitHub Actions to pick up the job…" });
   else if (run.status !== "completed") Object.assign(b, { state: "active", desc: `Agent working for ${dur(run.created_at)}. Reads CLAUDE.md and DESIGN.md, makes the change, runs the build, opens a PR.` });
   else if (run.conclusion !== "success") Object.assign(b, { state: "fail", desc: `The agent run ended with “${run.conclusion}”. Open the log to see why.` });
@@ -324,71 +381,114 @@ function route() {
 window.addEventListener("hashchange", route);
 
 /* Home */
-let pick = TICKETS[0]?.id || "custom";
 function renderHome() {
   viewKey = "home";
-  const tk = TICKETS.find(t => t.id === pick);
+  const signedOutNote = auth.available
+    ? `<a href="/api/login">Sign in with GitHub</a> to start a ticket with one click.`
+    : `Start opens the ticket on GitHub. Add the <span class="mono">agent</span> label there (or in Linear) and come back.`;
   $("#app").innerHTML = `
     <section class="hero"><h1>Turn a ticket into a <span>working PR</span>.</h1>
-      <p>Pick a request and press Start. An agent builds it, then the PR is checked with a 32-screenshot visual diff and an AI review, and you get a live preview to click through. You review and merge.</p></section>
+      <p>Pick a ticket from Linear and press Start. An agent builds it, then the PR is checked with a 32-screenshot visual diff and an AI review, and you get a live preview to click through. You review and merge.</p></section>
     <div class="home">
-      <section class="card start" aria-labelledby="startH">
-        <h2 id="startH">Start a run</h2>
-        <div class="agents">
-          <div class="agent on"><span class="ico">⚙</span><span><b>Build a feature</b><small>Ticket → PR, checked</small></span></div>
-          <div class="agent off" title="Coming later"><span class="ico">✎</span><span><b>Design &amp; UI</b><small>Later</small></span></div>
-          <div class="agent off" title="Coming later"><span class="ico">!</span><span><b>Fix a bug</b><small>Later</small></span></div>
-        </div>
-        <label class="f">Request</label>
-        <div class="templates" role="group" aria-label="Request">
-          ${TICKETS.map(t => `<button class="tpl" data-pick="${t.id}" aria-pressed="${pick === t.id}">${t.id} · ${esc(t.title)}</button>`).join("")}
-          <button class="tpl" data-pick="custom" aria-pressed="${pick === "custom"}">Write my own</button>
-        </div>
-        <label class="f" for="title">Title</label>
-        <input class="t" id="title" value="${esc(tk ? tk.title : "")}" placeholder="What should change?">
-        <label class="f" for="body">Details for the agent</label>
-        <textarea class="t" id="body" placeholder="Why, what to change, and how we'll know it's done (for example: Visual diff 0 changed).">${esc(tk ? tk.body : "Base branch: main\n\n## Why\n\n## Do\n\n## Done when\n- npm run build passes.\n")}</textarea>
-        <div class="go">
-          <span class="small muted">Start opens a pre-filled GitHub issue. Press <b>Create</b> there and come back here.</span>
-          <button class="btn primary" id="startBtn">Start agent →</button>
-        </div>
+      <section class="card start" aria-labelledby="readyH">
+        <h2 id="readyH">Ready for an agent</h2>
+        <span class="small muted">Open tickets synced from Linear that haven't been given to the agent yet.${auth.signedIn ? "" : " " + signedOutNote}</span>
+        <ul class="runs" id="ready"><li class="empty">Loading…</li></ul>
+        <details class="custom" id="custom">
+          <summary>Write a new request instead</summary>
+          <label class="f" for="title">Title</label>
+          <input class="t" id="title" placeholder="What should change?">
+          <label class="f" for="body">Details for the agent</label>
+          <textarea class="t" id="body">Base branch: main
+
+## Why
+
+## Do
+
+## Done when
+- npm run build passes.
+</textarea>
+          <div class="go"><span class="small muted">${auth.signedIn ? "Creates the issue with the agent label. Linear picks it up too." : "Opens a pre-filled GitHub issue. Press Create there."}</span>
+            <button class="btn primary" id="startNew">Start agent →</button></div>
+        </details>
+        <p class="small" id="startErr" role="alert" style="color:var(--bad);margin:10px 0 0"></p>
       </section>
       <section class="card recent" aria-labelledby="recentH">
         <h2 id="recentH">Runs</h2>
-        <span class="small muted">GitHub issues with the <span class="mono">agent</span> label, including ones started from Linear.</span>
+        <span class="small muted">Tickets with the <span class="mono">agent</span> label, whether started here or in Linear.</span>
         <ul class="runs" id="runs"><li class="empty">Loading…</li></ul>
       </section>
     </div>
-    <div class="foot"><span>Updates come straight from the public GitHub API. No sign-in or keys.</span><a href="?demo=1#run/PEB-1">Watch a demo run</a></div>`;
-  document.querySelectorAll("[data-pick]").forEach(b => b.onclick = () => { pick = b.dataset.pick; renderHome(); });
-  $("#startBtn").onclick = start;
-  loadRuns();
+    <div class="foot"><span>${auth.signedIn ? `Signed in as ${esc(auth.login)}. Calls use your GitHub account.` : "Signed out: read-only, 60 GitHub calls an hour."}</span><a href="?demo=1#run/PEB-1">Watch a demo run</a></div>`;
+  $("#startNew").onclick = startNew;
+  if (Q.get("signin")) $("#startErr").textContent = `Sign-in didn't finish (${Q.get("signin")}). Try again, and check the callback URL in your GitHub App.`;
+  loadLists();
 }
-async function loadRuns() {
-  const el = $("#runs"); if (!el) return;
-  let list = [];
+function issueRow(i, action) {
+  const id = ticketId(i) || `#${i.number}`, lin = linearURL(i);
+  return `<li><div class="row"><a class="tt" href="#run/${i.number}"><b>${esc(i.title)}</b><span class="small muted">${esc(id)} · ${ago(i.created_at)}${lin ? ` · <span class="lk" data-href="${esc(lin)}">Linear ↗</span>` : ""}</span></a>${action}</div></li>`;
+}
+async function loadLists() {
+  const ready = $("#ready"), runs = $("#runs"); if (!ready) return;
+  let open = [], agent = [];
   try {
-    if (DEMO) list = [{ id: "PEB-1", title: "PEB-1 Add design-system tokens (no visual change)", state: "open", created_at: new Date().toISOString() }];
-    else list = (await api(`/issues?labels=agent&state=all&sort=created&direction=desc&per_page=12`)).filter(i => !i.pull_request).map(i => ({
-      id: ((i.title.match(/^[A-Z]+-\d+/) || (i.body || "").match(/Ticket:\s*([A-Z]+-\d+)/) || [])[1] || (i.title.match(/^[A-Z]+-\d+/) || [])[0]) || `#${i.number}`,
-      title: i.title, state: i.state, created_at: i.created_at }));
+    if (DEMO) {
+      open = TICKETS.slice(1).map((t, k) => ({ number: 2 + k, title: `${t.id} ${t.title}`, body: `Ticket: ${t.id}`, created_at: new Date().toISOString(), state: "open", labels: [] }));
+      agent = [{ number: 1, title: "PEB-1 Add design-system tokens (no visual change)", body: "Ticket: PEB-1", created_at: new Date().toISOString(), state: "open", labels: [{ name: "agent" }] }];
+    } else {
+      const [o, g] = await Promise.all([api(`/issues?state=open&sort=created&direction=asc&per_page=30`), api(`/issues?labels=agent&state=all&sort=updated&direction=desc&per_page=12`)]);
+      open = o.filter(i => !i.pull_request && !i.labels.some(l => l.name === "agent"));
+      agent = g.filter(i => !i.pull_request);
+    }
     updateLive();
-  } catch (e) { el.innerHTML = `<li class="empty">${e.message === "rate" ? "GitHub's hourly limit for anonymous requests is used up. It resets within the hour." : "Couldn't reach GitHub."}</li>`; return; }
-  el.innerHTML = list.length ? list.map(r => `<li><a href="#run/${encodeURIComponent(r.id)}"><span class="tt"><b>${esc(r.title)}</b><span class="small muted">${esc(r.id)} · ${ago(r.created_at)}</span></span>
-    ${r.state === "closed" ? `<span class="pill ok">Closed</span>` : `<span class="pill acc">Open</span>`}</a></li>`).join("")
-    : `<li class="empty">No runs yet. Start one on the left.</li>`;
-  if (viewKey === "home") timer = setTimeout(loadRuns, 60000);
+  } catch (e) {
+    const msg = e.message === "rate" ? "GitHub's hourly limit is used up. Sign in, or wait for it to reset." : "Couldn't reach GitHub.";
+    ready.innerHTML = runs.innerHTML = `<li class="empty">${msg}</li>`; return;
+  }
+  ready.innerHTML = open.length ? open.map(i => issueRow(i, `<button class="btn sm primary" data-start="${i.number}">Start</button>`)).join("")
+    : `<li class="empty">Nothing waiting. Every open ticket already has the agent label. Reset the demo, or write a new request below.</li>`;
+  runs.innerHTML = agent.length ? agent.map(i => issueRow(i, i.state === "closed" ? `<span class="pill ok">Closed</span>` : `<span class="pill acc">Open</span>`)).join("")
+    : `<li class="empty">No runs yet.</li>`;
+  document.querySelectorAll("[data-start]").forEach(b => b.onclick = () => startExisting(open.find(i => i.number === +b.dataset.start), b));
+  document.querySelectorAll(".lk").forEach(s => s.onclick = e => { e.preventDefault(); e.stopPropagation(); window.open(s.dataset.href, "_blank", "noopener"); });
+  if (viewKey === "home") timer = setTimeout(loadLists, auth.signedIn ? 20000 : 60000);
 }
-function start() {
+function markStart(key) { const st = store.get("starts", {}); st[key] = new Date().toISOString(); store.set("starts", st); delete frozen[key]; }
+async function startExisting(issue, btn) {
+  if (!issue) return;
+  $("#startErr").textContent = "";
+  markStart(String(issue.number));
+  if (DEMO) { location.hash = "run/PEB-1"; return; }
+  if (!auth.signedIn) { window.open(issue.html_url, "_blank", "noopener"); location.hash = "run/" + issue.number; return; }
+  btn.disabled = true; btn.textContent = "Starting…";
+  try { await apiWrite("POST", `/issues/${issue.number}/labels`, { labels: ["agent"] }); location.hash = "run/" + issue.number; }
+  catch (e) { btn.disabled = false; btn.textContent = "Start"; $("#startErr").textContent = `Couldn't start: ${e.message}`; }
+}
+async function startNew() {
   const title = $("#title").value.trim(); let body = $("#body").value.trim();
   if (!title) { $("#title").focus(); return; }
-  const id = pick !== "custom" ? pick : "REQ-" + String(Math.floor(1000 + Math.random() * 9000));
+  const id = "REQ-" + String(Math.floor(1000 + Math.random() * 9000));
   if (!/^Ticket:/m.test(body)) body = `Ticket: ${id}\n${/^Base branch:/m.test(body) ? "" : "Base branch: main\n"}\n${body}`;
-  const url = `https://github.com/${REPO}/issues/new?` + new URLSearchParams({ title: `${id} ${title}`, body, labels: "agent" });
-  const starts = store.get("starts", {}); starts[id] = new Date().toISOString(); store.set("starts", starts);
-  if (!DEMO) window.open(url, "_blank", "noopener");
+  if (DEMO) { location.hash = "run/PEB-1"; return; }
+  if (auth.signedIn) {
+    const btn = $("#startNew"); btn.disabled = true; btn.textContent = "Starting…";
+    try { const i = await apiWrite("POST", `/issues`, { title: `${id} ${title}`, body, labels: ["agent"] }); markStart(String(i.number)); location.hash = "run/" + i.number; }
+    catch (e) { btn.disabled = false; btn.textContent = "Start agent →"; $("#startErr").textContent = `Couldn't start: ${e.message}`; }
+    return;
+  }
+  markStart(id);
+  window.open(`https://github.com/${REPO}/issues/new?` + new URLSearchParams({ title: `${id} ${title}`, body, labels: "agent" }), "_blank", "noopener");
   location.hash = "run/" + encodeURIComponent(id);
 }
+async function runAgain(m, btn) {
+  btn.disabled = true; btn.textContent = "Restarting…";
+  try {
+    await apiWrite("DELETE", `/issues/${m.issue.number}/labels/agent`);
+    await apiWrite("POST", `/issues/${m.issue.number}/labels`, { labels: ["agent"] });
+    const key = location.hash.replace(/^#\/?run\//, ""); markStart(decodeURIComponent(key)); route();
+  } catch (e) { btn.disabled = false; btn.textContent = "Run again"; alertBox(e.message); }
+}
+function alertBox(msg) { const s = $("#steps"); if (s) s.insertAdjacentHTML("afterbegin", `<div class="card step"><div class="callout bad">Couldn't restart: ${esc(msg)}</div></div>`); }
 
 /* Run */
 let prevOpts = { brand: "pebble", theme: "light", size: "desktop" };
@@ -397,7 +497,7 @@ async function renderRun(id) {
   const startedAt = store.get("starts", {})[id];
   if (!$("#steps") || $("#app").dataset.run !== id) {
     $("#app").dataset.run = id;
-    $("#app").innerHTML = `<div class="crumb"><a href="#">Runs</a> / ${esc(id)}</div>
+    $("#app").innerHTML = `<div class="crumb"><a href="#">Runs</a> / ${/^\d+$/.test(id) ? "#" + id : esc(id)}</div>
       <div class="runhead"><h1 id="rtitle">${esc(id)}</h1><div class="links" id="rlinks"></div></div>
       <div class="runbody"><nav class="card rail" aria-label="Steps"><ol id="rail"></ol><div class="meta" id="rmeta"></div></nav><div class="steps" id="steps"></div></div>`;
   }
@@ -425,7 +525,9 @@ function drawRun(m) {
     m.issue && `<a class="btn sm" href="${m.issue.html_url}" target="_blank" rel="noopener">Issue #${m.issue.number}</a>`,
     m.run && `<a class="btn sm" href="${m.run.html_url}" target="_blank" rel="noopener">Agent log</a>`,
     m.pr && `<a class="btn sm" href="${m.pr.html_url}" target="_blank" rel="noopener">PR #${m.pr.number}</a>`,
-    m.preview?.url && !m.preview.demo && `<a class="btn sm primary" href="${m.preview.url}" target="_blank" rel="noopener">Open preview ↗</a>`].filter(Boolean).join("");
+    m.preview?.url && !m.preview.demo && `<a class="btn sm primary" href="${m.preview.url}" target="_blank" rel="noopener">Open preview ↗</a>`,
+    auth.signedIn && m.issue && m.run && m.run.status === "completed" && !(m.pr && m.pr.merged_at) && `<button class="btn sm" id="again">Run again</button>`].filter(Boolean).join("");
+  const again = $("#again"); if (again) again.onclick = () => runAgain(m, again);
   $("#rail").innerHTML = S.map((s, i) => `<li class="${s.key === cur ? "cur" : ""}"><a href="#run/${encodeURIComponent(m.id)}" data-jump="${s.key}"><span class="st ${s.state}">${s.state === "active" ? "" : ICON[s.state] || i + 1}</span>${s.name}</a></li>`).join("");
   $("#rmeta").innerHTML = m.issue ? `Started ${ago(m.startedAt || m.issue.created_at)}` : "";
   document.querySelectorAll("[data-jump]").forEach(a => a.onclick = e => { e.preventDefault(); document.getElementById("step-" + a.dataset.jump)?.scrollIntoView({ behavior: "smooth", block: "start" }); });
@@ -490,7 +592,7 @@ function updateLive() {
   el.className = "pill " + (rate.left < 10 ? "bad" : "ok");
   el.innerHTML = `<span class="dot"></span>Live · ${rate.left} calls left`;
 }
-route();
+loadAuth().then(() => { drawAuth(); route(); });
 </script>
 </body>
 </html>
