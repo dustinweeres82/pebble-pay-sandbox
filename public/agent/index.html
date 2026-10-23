@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pebble Agents</title>
+<style>
+/* Layout: top bar, then either Home (start form + recent runs) or Run (step timeline + live preview). */
+:root {
+  --bg: #f5f6f8; --surface: #ffffff; --sunken: #eef0f4; --ink: #151a22; --ink-2: #4a5566; --ink-3: #7a8596;
+  --line: #e1e5eb; --accent: #3b5bdb; --accent-ink: #ffffff; --accent-soft: #e8edff;
+  --ok: #188a5b; --ok-soft: #e1f5ec; --run: #b26b00; --run-soft: #fff3df; --bad: #c4372b; --bad-soft: #fde8e6;
+  --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root {
+  --bg: #0e1116; --surface: #161b22; --sunken: #1d232c; --ink: #e8edf3; --ink-2: #aab4c2; --ink-3: #7d8899;
+  --line: #2a313c; --accent: #7c95ff; --accent-ink: #0e1116; --accent-soft: #1f2747;
+  --ok: #4cc38a; --ok-soft: #12291f; --run: #f0a542; --run-soft: #2c2110; --bad: #ff7a6e; --bad-soft: #2f1614;
+  color-scheme: dark; } }
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--font); }
+a { color: var(--accent); }
+button, input, textarea, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.top { display: flex; align-items: center; gap: 12px; padding: 12px max(16px, 3vw); border-bottom: 1px solid var(--line); background: var(--surface); position: sticky; top: 0; z-index: 5; }
+.logo { white-space: nowrap; display: flex; align-items: center; gap: 10px; font-weight: 750; letter-spacing: -.01em; color: var(--ink); text-decoration: none; }
+.logo i { width: 26px; height: 26px; border-radius: 8px; background: var(--accent); display: grid; place-items: center; color: var(--accent-ink); font-style: normal; font-size: 14px; }
+.top .repo { font: 12.5px var(--mono); color: var(--ink-3); }
+.top .sp { flex: 1; }
+.pill { display: inline-flex; align-items: center; gap: 6px; font: 600 12px/1 var(--font); padding: 5px 9px; border-radius: 99px; background: var(--sunken); color: var(--ink-2); white-space: nowrap; }
+.pill.ok { background: var(--ok-soft); color: var(--ok); }
+.pill.run { background: var(--run-soft); color: var(--run); }
+.pill.bad { background: var(--bad-soft); color: var(--bad); }
+.pill.acc { background: var(--accent-soft); color: var(--accent); }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.pill.run .dot { animation: blink 1s infinite; }
+@keyframes blink { 50% { opacity: .3; } }
+
+.page { max-width: 1240px; margin: 0 auto; padding: 28px max(16px, 3vw) 64px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 8px; padding: 8px 14px; font-weight: 600; font-size: 14px; cursor: pointer; text-decoration: none; white-space: nowrap; }
+.btn:hover { background: var(--sunken); }
+.btn.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.btn.primary:hover { opacity: .9; }
+.btn.sm { padding: 5px 10px; font-size: 13px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+.muted { color: var(--ink-2); }
+.small { font-size: 13px; }
+.mono { font-family: var(--mono); font-size: 12.5px; }
+
+/* Home */
+.hero h1 { font-size: clamp(30px, 4.5vw, 46px); line-height: 1.05; letter-spacing: -.03em; margin: 0 0 10px; }
+.hero h1 span { color: var(--accent); }
+.hero p { margin: 0 0 24px; color: var(--ink-2); max-width: 62ch; }
+.home { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+.start { padding: 20px; }
+.start h2, .recent h2 { font-size: 17px; margin: 0 0 4px; }
+.agents { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0 16px; }
+.agent { display: flex; gap: 10px; align-items: center; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); min-width: 0; }
+.agent.on { border-color: var(--accent); background: var(--accent-soft); }
+.agent.off { opacity: .55; }
+.agent b { display: block; font-size: 14px; }
+.agent small { color: var(--ink-3); font-size: 12px; }
+.ico { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); flex: none; font-weight: 700; }
+label.f { display: block; font-weight: 600; font-size: 13px; margin: 14px 0 6px; }
+.templates { display: flex; gap: 6px; flex-wrap: wrap; }
+.tpl { border: 1px solid var(--line); background: var(--surface); border-radius: 99px; padding: 5px 11px; font-size: 13px; cursor: pointer; }
+.tpl[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); font-weight: 600; }
+input.t, textarea.t { width: 100%; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 9px 11px; }
+textarea.t { min-height: 180px; resize: vertical; font: 13px/1.5 var(--mono); }
+.start .go { display: flex; gap: 12px; align-items: center; justify-content: space-between; margin-top: 16px; flex-wrap: wrap; }
+.recent { padding: 20px; }
+.runs { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; }
+.runs li a { display: flex; gap: 10px; align-items: center; justify-content: space-between; padding: 11px 4px; border-top: 1px solid var(--line); color: var(--ink); text-decoration: none; }
+.runs li a:hover { background: var(--sunken); }
+.runs .tt { min-width: 0; }
+.runs .tt b { display: block; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.empty { padding: 18px; border: 1px dashed var(--line); border-radius: 10px; color: var(--ink-3); font-size: 14px; margin-top: 12px; }
+
+/* Run */
+.crumb { font-size: 13px; color: var(--ink-3); margin-bottom: 6px; }
+.crumb a { color: var(--ink-3); text-decoration: none; }
+.runhead { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.runhead h1 { font-size: clamp(22px, 3vw, 28px); letter-spacing: -.02em; margin: 0; line-height: 1.2; }
+.runhead .links { display: flex; gap: 8px; flex-wrap: wrap; }
+.runbody { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 20px; align-items: start; }
+.rail { padding: 10px; position: sticky; top: 76px; }
+.rail ol { list-style: none; margin: 0; padding: 0; }
+.rail li a { display: flex; gap: 10px; align-items: center; padding: 9px 8px; border-radius: 8px; color: var(--ink); text-decoration: none; font-weight: 600; font-size: 14px; }
+.rail li a:hover { background: var(--sunken); }
+.rail li.cur a { background: var(--accent-soft); }
+.st { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; flex: none; border: 1.5px solid var(--line); color: var(--ink-3); background: var(--surface); }
+.st.done { background: var(--ok); border-color: var(--ok); color: #fff; }
+.st.active { border-color: var(--run); color: var(--run); }
+.st.active::after { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--run); animation: blink 1s infinite; }
+.st.fail { background: var(--bad); border-color: var(--bad); color: #fff; }
+.st.wait { border-color: var(--accent); color: var(--accent); }
+.rail .meta { margin: 10px 8px 4px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 12px; color: var(--ink-3); }
+
+.steps { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.step { padding: 16px 18px; scroll-margin-top: 80px; }
+.step.cur { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.step header { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.step h3 { margin: 0; font-size: 16px; display: flex; gap: 10px; align-items: center; }
+.step .desc { margin: 6px 0 0 32px; color: var(--ink-2); font-size: 14px; }
+.step .body { margin: 12px 0 0 32px; min-width: 0; }
+.checklist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.checklist li { display: flex; gap: 8px; align-items: center; font-size: 14px; }
+.checklist .st { width: 18px; height: 18px; font-size: 10px; }
+.checklist .st.active::after { width: 6px; height: 6px; }
+pre.ticket { margin: 0; white-space: pre-wrap; font: 12.5px/1.55 var(--mono); background: var(--sunken); border-radius: 8px; padding: 12px; max-height: 220px; overflow: auto; }
+details summary { cursor: pointer; font-size: 13px; color: var(--ink-2); margin-bottom: 8px; }
+.kv { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+.kv div { background: var(--sunken); border-radius: 8px; padding: 10px 12px; }
+.kv small { display: block; color: var(--ink-3); font-size: 12px; }
+.kv b { font-size: 15px; }
+.big { font-size: 22px; font-weight: 750; letter-spacing: -.01em; }
+table.vd { border-collapse: collapse; width: 100%; font-size: 13px; margin-top: 8px; }
+table.vd td { padding: 6px 8px; border-top: 1px solid var(--line); }
+table.vd td:last-child { text-align: right; font-family: var(--mono); color: var(--ink-2); }
+.review { white-space: pre-wrap; font-size: 13.5px; background: var(--sunken); border-radius: 8px; padding: 12px; margin-top: 10px; max-height: 260px; overflow: auto; }
+.callout { padding: 10px 12px; border-radius: 8px; background: var(--run-soft); color: var(--ink); font-size: 14px; }
+.callout.bad { background: var(--bad-soft); }
+.callout.ok { background: var(--ok-soft); }
+
+.preview .bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { border: 0; background: var(--surface); padding: 5px 10px; font-size: 13px; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.frame { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--sunken); display: flex; justify-content: center; }
+.frame iframe { border: 0; width: 100%; height: 640px; background: #fff; transition: width .25s; }
+.frame.mobile iframe { width: 390px; max-width: 100%; }
+.placeholder { padding: 40px 20px; text-align: center; color: var(--ink-3); font-size: 14px; width: 100%; }
+.foot { margin-top: 28px; font-size: 12px; color: var(--ink-3); display: flex; flex-wrap: wrap; gap: 6px 16px; }
+
+@media (max-width: 860px) {
+  .top .repo { display: none; }
+  .home, .runbody { grid-template-columns: 1fr; }
+  .rail { position: static; }
+  .step .desc, .step .body { margin-left: 0; }
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="top">
+  <a class="logo" href="#"><i>P</i>Pebble Agents</a>
+  <span class="repo" id="repoLabel"></span>
+  <span class="sp"></span>
+  <span class="pill" id="live" title="GitHub API calls left this hour">…</span>
+</div>
+<div class="page" id="app"></div>
+
+<script>
+/* ---------------- Config ---------------- */
+const Q = new URLSearchParams(location.search);
+const REPO = Q.get("repo") || "dustinweeres82/pebble-pay-sandbox";
+const DEMO = Q.has("demo");
+const GH = "https://api.github.com/repos/" + REPO;
+const TICKETS = [{"id": "PEB-1", "title": "Add design-system tokens (no visual change)", "body": "Base branch: main\n\n## Why\nThe legacy templates paint with palette classes and `dark:` twins. Before moving them, the\ntoken layer needs every role they use, set to exactly what they render today.\n\n## Do\n- In `src/styles/theme_pebble.css`, add these roles to the light block and the dark block (light → dark):\n  - per intent (`primary` ocean, `info` sky, `success` leaf, `warning` sun, `destructive` ember):\n    `-hover` (200 → 200), `-active` (700 → 600; warning 700 → 650), `-subtle` (100 → stone-700), `-emphasis` (500 → 500)\n  - `caution` sun-650 → sun-400\n  - `on-hover` stone-800 → stone-800, `on-active` stone-200 → stone-900, `focus-border` stone-600 → stone-50\n  - `disabled` stone-200 → stone-700, `disabled-foreground` stone-500 → stone-400\n  - `field` white → stone-900, `field-border` stone-300 → stone-700, `field-focus` sky-600 → sky-400, `field-placeholder` stone-500 → stone-500\n- Map each in `src/styles/shadcn_base.css` (`@theme inline`) and add a fallback derived from shadcn roles in a `@layer base` block, so the Partner brand still works.\n- Add a token table to DESIGN.md.\n- Don't change any component or template, and don't edit `theme_partner.css`.\n\n## Done when\n- `npm run build` passes.\n- Visual diff: **0 of 32 screenshots changed.**"}, {"id": "PEB-2", "title": "Legacy templates on tokens (no visual change for Pebble)", "body": "Base branch: main\n\n## Why\nToday a color, dark-mode or brand change has to be repeated in every legacy template.\nAfter this, it's made once in the theme.\n\n## Do\n- In `src/legacy/templates.js`, replace every palette class and `dark:` variant with semantic tokens:\n  - button fills → `bg-<intent>` + `text-primary-foreground`; secondary theme → `bg-background` + `text-<intent>`;\n    hover/active → `<intent>-hover` / `<intent>-active` (caution uses `caution` for the fill and `warning-*` for states);\n    `on-hover`, `on-active`, `focus-border`, `disabled`, `disabled-foreground`\n  - alerts → `<intent>-subtle` surface, `<intent>-emphasis` border and icon, `text-foreground` (caution → warning, destruction → destructive)\n  - badges → `bg-success` / `bg-warning` / `bg-destructive` / `bg-info` + `text-primary-foreground`\n  - text field → `field`, `field-border`, `field-focus`, `field-placeholder`, `text-foreground`\n- Keep the function signatures the same.\n\n## Done when\n- `src/legacy/` has no palette classes and no `dark:`.\n- Visual diff: **0 Pebble screenshots changed.** Partner · legacy-* screenshots change (expected:\n  the second brand now reaches the legacy templates). Nothing in react-* changes."}, {"id": "PEB-3", "title": "Restyle shadcn components to the legacy look", "body": "Base branch: main\n\n## Why\nUsers see the legacy look everywhere except the newer React screens. Give the React\ncomponents the same look through the same tokens, keeping shadcn's structure and props.\n\n## Do\n- `src/components/ui/button.jsx`: pill (`rounded-full`), 4px border, semibold, `text-xl`, full width at the default size.\n  Variants: `default` (primary fill), `secondary`/`outline` (background + primary text), `caution` (new), `destructive`,\n  `ghost`, `link`. Hover/active/disabled/focus use the same tokens as the legacy button.\n- `src/components/ui/alert.jsx`: 4px top border in `<intent>-emphasis`, `<intent>-subtle` surface, `text-foreground`.\n  Variants `default` (info), `success`, `warning`, `destructive`. Add `AlertIcon` and `AlertContent`.\n- `src/components/ui/badge.jsx`: status pill. Add `success`, `warning`, `info` variants.\n- `src/components/ui/input.jsx`: legacy field (bottom border, `field-*` tokens).\n- Update the React column in `src/App.jsx` to use the new variants with the same content as the legacy column.\n- Add a legacy ↔ React mapping table to DESIGN.md.\n\n## Done when\n- Only react-* screenshots change. In Pebble, each React section looks the same as its legacy section."}, {"id": "PEB-4", "title": "One yellow", "body": "Base branch: main\n\n## Why\nCaution buttons use sun-650 while warning badges and alerts use sun-600. Two yellows for one\nmeaning. Decision: use sun-600 everywhere.\n\n## Do\n- In `src/styles/theme_pebble.css`, set `--caution` in the light block to `var(--color-sun-600)`. Dark stays sun-400.\n- Update the `caution` row in DESIGN.md and add a \"Decisions\" entry for PEB-4.\n- Change nothing else.\n\n## Done when\n- Visual diff: **2 of 32 screenshots changed** — `pebble · light · legacy-buttons` and\n  `pebble · light · react-buttons` (the \"Review payout\" button). One token, both stacks."}];
+document.getElementById("repoLabel").textContent = REPO + (DEMO ? " · demo mode" : "");
+
+/* ---------------- Small helpers ---------------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const ago = iso => { if (!iso) return ""; const s = Math.max(0, (Date.now() - new Date(iso)) / 1000);
+  return s < 60 ? `${Math.round(s)}s ago` : s < 3600 ? `${Math.round(s / 60)}m ago` : s < 86400 ? `${Math.round(s / 3600)}h ago` : `${Math.round(s / 86400)}d ago`; };
+const dur = (a, b) => { if (!a) return ""; const s = Math.round(((b ? new Date(b) : new Date()) - new Date(a)) / 1000); return s < 60 ? `${s}s` : `${Math.floor(s / 60)}m ${s % 60}s`; };
+const store = { get(k, d) { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} } };
+
+/* ---------------- GitHub API (conditional requests; 304s don't use up the rate limit) ---------------- */
+const cache = new Map();
+let rate = { left: null, reset: null };
+async function api(path) {
+  const url = path.startsWith("http") ? path : GH + path;
+  const hit = cache.get(url);
+  const headers = { Accept: "application/vnd.github+json" };
+  if (hit?.etag) headers["If-None-Match"] = hit.etag;
+  const res = await fetch(url, { headers, cache: "no-store" });
+  const left = res.headers.get("x-ratelimit-remaining"), reset = res.headers.get("x-ratelimit-reset");
+  if (left !== null) rate = { left: +left, reset: +reset * 1000 };
+  if (res.status === 304 && hit) return hit.data;
+  if (res.status === 403 || res.status === 429) throw new Error("rate");
+  if (!res.ok) throw new Error(`GitHub ${res.status} for ${path}`);
+  const data = await res.json();
+  cache.set(url, { etag: res.headers.get("etag"), data });
+  return data;
+}
+
+/* ---------------- Find the pieces of one run ---------------- */
+function matchesTicket(issue, id) {
+  return issue.title.startsWith(id + " ") || issue.title === id || (issue.body || "").includes(`Ticket: ${id}`);
+}
+const frozen = {}; // parts of a run that can't change any more, so we stop asking GitHub for them
+async function liveModel(id, startedAt) {
+  const f = frozen[id] || (frozen[id] = {});
+  const m = { id, startedAt };
+  if (!f.issue) {
+    const issues = (await api(`/issues?labels=agent&state=all&sort=created&direction=desc&per_page=20`)).filter(i => !i.pull_request);
+    f.issue = issues.find(i => matchesTicket(i, id));
+  }
+  m.issue = f.issue;
+  if (!m.issue) return m;
+  if (!f.run) {
+    const runs = (await api(`/actions/workflows/agent.yml/runs?event=issues&per_page=20`)).workflow_runs || [];
+    m.run = runs.find(r => r.display_title === m.issue.title && new Date(r.created_at) >= new Date(m.issue.created_at) - 5000);
+    if (m.run) {
+      const jobs = (await api(`/actions/runs/${m.run.id}/jobs`)).jobs || [];
+      m.steps = (jobs[0]?.steps || []).map(s => ({ name: s.name, status: s.status, conclusion: s.conclusion, started: s.started_at, done: s.completed_at }));
+      if (m.run.status === "completed") { f.run = m.run; f.steps = m.steps; }
+    }
+  } else { m.run = f.run; m.steps = f.steps; }
+  if (!m.run || m.run.status !== "completed") return m;
+  const pulls = await api(`/pulls?state=all&sort=created&direction=desc&per_page=20`);
+  m.pr = pulls.find(p => (p.body || "").includes(`#${m.issue.number}`) || p.title.startsWith(id + " "));
+  if (!m.pr) return m;
+  const sha = m.pr.head.sha;
+  if (f.checksFor === sha) { Object.assign(m, f.checksPart); return m; }
+  const [checks, comments, deps] = await Promise.all([
+    api(`/commits/${sha}/check-runs?per_page=50`), api(`/issues/${m.pr.number}/comments?per_page=50`), api(`/deployments?sha=${sha}&per_page=5`)]);
+  const part = {};
+  part.checks = (checks.check_runs || []).map(c => ({ name: c.name, status: c.status, conclusion: c.conclusion, url: c.html_url }));
+  const vd = [...comments].reverse().find(c => /#+\s*Visual diff/i.test(c.body || ""));
+  if (vd) part.visual = parseVisual(vd.body, vd.html_url);
+  const ai = [...comments].reverse().find(c => /^\s*\**ai review/i.test(c.body || ""));
+  if (ai) part.review = { text: ai.body, url: ai.html_url };
+  if (deps.length) {
+    const st = await api(`/deployments/${deps[0].id}/statuses?per_page=5`);
+    const ok = st.find(s => s.environment_url && s.state === "success");
+    part.preview = ok ? { url: ok.environment_url } : { pending: true, state: st[0]?.state || "pending" };
+  }
+  Object.assign(m, part);
+  if (part.visual && part.review && part.preview?.url) { f.checksFor = sha; f.checksPart = part; }
+  return m;
+}
+function parseVisual(body, url) {
+  const m = body.match(/(\d+) of (\d+) screenshots changed/i);
+  const rows = body.split("\n").filter(l => /^\|/.test(l) && !/^\|\s*-/.test(l) && !/Screenshot/i.test(l))
+    .map(l => l.split("|").map(s => s.trim()).filter(Boolean)).filter(r => r.length >= 2);
+  return { changed: m ? +m[1] : null, total: m ? +m[2] : null, rows, url };
+}
+
+/* ---------------- Demo mode: a scripted run, same shape as liveModel ---------------- */
+const DEMO_T0 = Date.now();
+function demoModel(id) {
+  const t = (Date.now() - DEMO_T0) / 1000, at = s => new Date(DEMO_T0 + s * 1000).toISOString();
+  const tk = TICKETS.find(x => x.id === id) || TICKETS[0];
+  const m = { id, startedAt: at(0) };
+  if (t < 3) return m;
+  m.issue = { number: 12, title: `${id} ${tk.title}`, body: tk.body, html_url: "#", created_at: at(3) };
+  if (t < 5) return m;
+  const plan = [["Set up job", 5, 6], ["Checkout", 6, 7], ["Set up Node", 7, 8], ["npm install", 8, 10], ["Run Claude Code (agent)", 10, 21], ["Complete job", 21, 22]];
+  m.steps = plan.map(([n, a, z]) => { const st = t < a ? "queued" : t < z ? "in_progress" : "completed";
+    return { name: n, status: st, conclusion: st === "completed" ? "success" : null, started: at(a) }; });
+  const done = t >= 22;
+  m.run = { status: done ? "completed" : "in_progress", conclusion: done ? "success" : null, created_at: at(5), html_url: "#", updated_at: at(Math.min(t, 22)) };
+  if (!done) return m;
+  m.pr = { number: 13, title: `${id} ${tk.title}`, html_url: "#", draft: true, state: "open", merged_at: null, created_at: at(22), additions: 64, deletions: 2, changed_files: 3 };
+  const tp = t - 22;
+  m.checks = [
+    { name: "diff", status: tp > 8 ? "completed" : "in_progress", conclusion: tp > 8 ? "success" : null, url: "#" },
+    { name: "review", status: tp > 12 ? "completed" : "in_progress", conclusion: tp > 12 ? "success" : null, url: "#" },
+    { name: "Vercel", status: tp > 5 ? "completed" : "in_progress", conclusion: tp > 5 ? "success" : null, url: "#" }];
+  if (tp > 8) m.visual = { changed: 0, total: 32, rows: [], url: "#" };
+  if (tp > 12) m.review = { text: "AI review:\n- Pass: no palette classes or dark: variants\n- Pass: tokens added in theme_pebble.css (light + dark), shadcn_base.css with fallbacks, DESIGN.md\n- Pass: theme_partner.css untouched\n- Pass: PR says 0 screenshots should change, matches the diff", url: "#" };
+  if (tp > 5) m.preview = { url: "about:blank", demo: true };
+  return m;
+}
+
+/* ---------------- Stages ---------------- */
+function stages(m) {
+  const S = [];
+  const run = m.run, pr = m.pr;
+  S.push({ key: "request", name: "Request",
+    state: m.issue ? "done" : "active",
+    desc: m.issue ? `Issue #${m.issue.number} created ${ago(m.issue.created_at)} with the agent label.` : "Waiting for the GitHub issue. Submit it in the tab that opened." });
+  let b = { key: "build", name: "Build" };
+  if (!m.issue) Object.assign(b, { state: "todo", desc: "The agent starts when the issue exists." });
+  else if (!run) Object.assign(b, { state: "active", desc: "Waiting for GitHub Actions to pick up the job…" });
+  else if (run.status !== "completed") Object.assign(b, { state: "active", desc: `Agent working for ${dur(run.created_at)}. Reads CLAUDE.md and DESIGN.md, makes the change, runs the build, opens a PR.` });
+  else if (run.conclusion !== "success") Object.assign(b, { state: "fail", desc: `The agent run ended with “${run.conclusion}”. Open the log to see why.` });
+  else if (!pr) Object.assign(b, { state: "fail", desc: "The agent finished but didn't open a PR. Usually the change was already on main, or the branch name was taken. Reset the demo and try again." });
+  else Object.assign(b, { state: "done", desc: `Finished in ${dur(run.created_at, run.updated_at)} and opened PR #${pr.number}.` });
+  S.push(b);
+  const chk = n => (m.checks || []).find(c => c.name.toLowerCase().includes(n));
+  const vd = chk("diff"), ai = chk("review");
+  let r = { key: "review", name: "Review" };
+  if (!pr) Object.assign(r, { state: "todo", desc: "Visual diff and AI review run on the PR." });
+  else { const all = [vd, ai].filter(Boolean); const doneAll = all.length >= 2 && all.every(c => c.status === "completed") && m.visual && m.review;
+    const failed = all.some(c => c.status === "completed" && c.conclusion !== "success");
+    Object.assign(r, { state: failed ? "fail" : doneAll ? "done" : "active", desc: doneAll ? "Screenshots compared and the PR reviewed against DESIGN.md." : "Capturing 32 screenshots and reviewing the PR…" }); }
+  S.push(r);
+  let p = { key: "preview", name: "Preview" };
+  if (!pr) Object.assign(p, { state: "todo", desc: "Vercel builds a preview of the PR." });
+  else if (m.preview?.url) Object.assign(p, { state: "done", desc: "Click through the change below, in either brand and mode." });
+  else Object.assign(p, { state: m.preview?.pending || (m.checks || []).some(c => /vercel/i.test(c.name)) ? "active" : "todo",
+    desc: m.preview?.pending ? "Vercel is building the preview…" : "No preview yet. If this repo isn't connected to Vercel, the preview step stays empty." });
+  S.push(p);
+  let s = { key: "ship", name: "Ship" };
+  if (!pr) Object.assign(s, { state: "todo", desc: "You review and merge." });
+  else if (pr.merged_at) Object.assign(s, { state: "done", desc: `Merged ${ago(pr.merged_at)}. The Linear ticket moves to Done.` });
+  else if (pr.state === "closed") Object.assign(s, { state: "fail", desc: "PR closed without merging." });
+  else Object.assign(s, { state: r.state === "done" ? "wait" : "todo", desc: pr.draft ? "Draft PR. Review it, mark it ready, then merge on GitHub." : "Ready for review. Merge on GitHub when you're happy." });
+  S.push(s);
+  return S;
+}
+const ICON = { done: "✓", fail: "!", todo: "", active: "", wait: "→" };
+const statusPill = st => ({ done: `<span class="pill ok"><span class="dot"></span>Done</span>`, active: `<span class="pill run"><span class="dot"></span>Running</span>`,
+  fail: `<span class="pill bad">Needs attention</span>`, wait: `<span class="pill acc">Your turn</span>`, todo: `<span class="pill">Up next</span>` }[st]);
+
+/* ---------------- Views ---------------- */
+let timer = null, viewKey = "";
+function route() {
+  clearTimeout(timer);
+  const h = location.hash.replace(/^#\/?/, "");
+  if (h.startsWith("run/")) renderRun(decodeURIComponent(h.slice(4)));
+  else renderHome();
+}
+window.addEventListener("hashchange", route);
+
+/* Home */
+let pick = TICKETS[0]?.id || "custom";
+function renderHome() {
+  viewKey = "home";
+  const tk = TICKETS.find(t => t.id === pick);
+  $("#app").innerHTML = `
+    <section class="hero"><h1>Turn a ticket into a <span>working PR</span>.</h1>
+      <p>Pick a request and press Start. An agent builds it, then the PR is checked with a 32-screenshot visual diff and an AI review, and you get a live preview to click through. You review and merge.</p></section>
+    <div class="home">
+      <section class="card start" aria-labelledby="startH">
+        <h2 id="startH">Start a run</h2>
+        <div class="agents">
+          <div class="agent on"><span class="ico">⚙</span><span><b>Build a feature</b><small>Ticket → PR, checked</small></span></div>
+          <div class="agent off" title="Coming later"><span class="ico">✎</span><span><b>Design &amp; UI</b><small>Later</small></span></div>
+          <div class="agent off" title="Coming later"><span class="ico">!</span><span><b>Fix a bug</b><small>Later</small></span></div>
+        </div>
+        <label class="f">Request</label>
+        <div class="templates" role="group" aria-label="Request">
+          ${TICKETS.map(t => `<button class="tpl" data-pick="${t.id}" aria-pressed="${pick === t.id}">${t.id} · ${esc(t.title)}</button>`).join("")}
+          <button class="tpl" data-pick="custom" aria-pressed="${pick === "custom"}">Write my own</button>
+        </div>
+        <label class="f" for="title">Title</label>
+        <input class="t" id="title" value="${esc(tk ? tk.title : "")}" placeholder="What should change?">
+        <label class="f" for="body">Details for the agent</label>
+        <textarea class="t" id="body" placeholder="Why, what to change, and how we'll know it's done (for example: Visual diff 0 changed).">${esc(tk ? tk.body : "Base branch: main\n\n## Why\n\n## Do\n\n## Done when\n- npm run build passes.\n")}</textarea>
+        <div class="go">
+          <span class="small muted">Start opens a pre-filled GitHub issue. Press <b>Create</b> there and come back here.</span>
+          <button class="btn primary" id="startBtn">Start agent →</button>
+        </div>
+      </section>
+      <section class="card recent" aria-labelledby="recentH">
+        <h2 id="recentH">Runs</h2>
+        <span class="small muted">GitHub issues with the <span class="mono">agent</span> label, including ones started from Linear.</span>
+        <ul class="runs" id="runs"><li class="empty">Loading…</li></ul>
+      </section>
+    </div>
+    <div class="foot"><span>Updates come straight from the public GitHub API. No sign-in or keys.</span><a href="?demo=1#run/PEB-1">Watch a demo run</a></div>`;
+  document.querySelectorAll("[data-pick]").forEach(b => b.onclick = () => { pick = b.dataset.pick; renderHome(); });
+  $("#startBtn").onclick = start;
+  loadRuns();
+}
+async function loadRuns() {
+  const el = $("#runs"); if (!el) return;
+  let list = [];
+  try {
+    if (DEMO) list = [{ id: "PEB-1", title: "PEB-1 Add design-system tokens (no visual change)", state: "open", created_at: new Date().toISOString() }];
+    else list = (await api(`/issues?labels=agent&state=all&sort=created&direction=desc&per_page=12`)).filter(i => !i.pull_request).map(i => ({
+      id: ((i.title.match(/^[A-Z]+-\d+/) || (i.body || "").match(/Ticket:\s*([A-Z]+-\d+)/) || [])[1] || (i.title.match(/^[A-Z]+-\d+/) || [])[0]) || `#${i.number}`,
+      title: i.title, state: i.state, created_at: i.created_at }));
+    updateLive();
+  } catch (e) { el.innerHTML = `<li class="empty">${e.message === "rate" ? "GitHub's hourly limit for anonymous requests is used up. It resets within the hour." : "Couldn't reach GitHub."}</li>`; return; }
+  el.innerHTML = list.length ? list.map(r => `<li><a href="#run/${encodeURIComponent(r.id)}"><span class="tt"><b>${esc(r.title)}</b><span class="small muted">${esc(r.id)} · ${ago(r.created_at)}</span></span>
+    ${r.state === "closed" ? `<span class="pill ok">Closed</span>` : `<span class="pill acc">Open</span>`}</a></li>`).join("")
+    : `<li class="empty">No runs yet. Start one on the left.</li>`;
+  if (viewKey === "home") timer = setTimeout(loadRuns, 60000);
+}
+function start() {
+  const title = $("#title").value.trim(); let body = $("#body").value.trim();
+  if (!title) { $("#title").focus(); return; }
+  const id = pick !== "custom" ? pick : "REQ-" + String(Math.floor(1000 + Math.random() * 9000));
+  if (!/^Ticket:/m.test(body)) body = `Ticket: ${id}\n${/^Base branch:/m.test(body) ? "" : "Base branch: main\n"}\n${body}`;
+  const url = `https://github.com/${REPO}/issues/new?` + new URLSearchParams({ title: `${id} ${title}`, body, labels: "agent" });
+  const starts = store.get("starts", {}); starts[id] = new Date().toISOString(); store.set("starts", starts);
+  if (!DEMO) window.open(url, "_blank", "noopener");
+  location.hash = "run/" + encodeURIComponent(id);
+}
+
+/* Run */
+let prevOpts = { brand: "pebble", theme: "light", size: "desktop" };
+async function renderRun(id) {
+  viewKey = "run:" + id;
+  const startedAt = store.get("starts", {})[id];
+  if (!$("#steps") || $("#app").dataset.run !== id) {
+    $("#app").dataset.run = id;
+    $("#app").innerHTML = `<div class="crumb"><a href="#">Runs</a> / ${esc(id)}</div>
+      <div class="runhead"><h1 id="rtitle">${esc(id)}</h1><div class="links" id="rlinks"></div></div>
+      <div class="runbody"><nav class="card rail" aria-label="Steps"><ol id="rail"></ol><div class="meta" id="rmeta"></div></nav><div class="steps" id="steps"></div></div>`;
+  }
+  let m;
+  try { m = DEMO ? demoModel(id) : await liveModel(id, startedAt); }
+  catch (e) {
+    $("#steps").innerHTML = `<div class="card step"><div class="callout bad">${e.message === "rate" ? `GitHub's hourly limit for anonymous requests is used up. Live updates resume ${rate.reset ? "at " + new Date(rate.reset).toLocaleTimeString() : "within the hour"}.` : esc(e.message)}</div></div>`;
+    updateLive(); timer = setTimeout(() => route(), 60000); return;
+  }
+  if (viewKey !== "run:" + id) return;
+  drawRun(m);
+  updateLive();
+  const finished = m.pr && (m.pr.merged_at || m.pr.state === "closed");
+  const failed = m.run && m.run.status === "completed" && (m.run.conclusion !== "success" || !m.pr);
+  if (!finished && !(failed && !DEMO)) {
+    const low = rate.left !== null && rate.left < 10;
+    timer = setTimeout(() => route(), DEMO ? 1000 : low ? 60000 : m.run && m.run.status !== "completed" ? 10000 : 15000);
+  }
+}
+function drawRun(m) {
+  const S = stages(m);
+  const cur = (S.find(s => s.state === "active" || s.state === "fail" || s.state === "wait") || S[S.length - 1]).key;
+  $("#rtitle").textContent = m.issue ? m.issue.title : `${m.id} · waiting for the issue`;
+  $("#rlinks").innerHTML = [
+    m.issue && `<a class="btn sm" href="${m.issue.html_url}" target="_blank" rel="noopener">Issue #${m.issue.number}</a>`,
+    m.run && `<a class="btn sm" href="${m.run.html_url}" target="_blank" rel="noopener">Agent log</a>`,
+    m.pr && `<a class="btn sm" href="${m.pr.html_url}" target="_blank" rel="noopener">PR #${m.pr.number}</a>`,
+    m.preview?.url && !m.preview.demo && `<a class="btn sm primary" href="${m.preview.url}" target="_blank" rel="noopener">Open preview ↗</a>`].filter(Boolean).join("");
+  $("#rail").innerHTML = S.map((s, i) => `<li class="${s.key === cur ? "cur" : ""}"><a href="#run/${encodeURIComponent(m.id)}" data-jump="${s.key}"><span class="st ${s.state}">${s.state === "active" ? "" : ICON[s.state] || i + 1}</span>${s.name}</a></li>`).join("");
+  $("#rmeta").innerHTML = m.issue ? `Started ${ago(m.startedAt || m.issue.created_at)}` : "";
+  document.querySelectorAll("[data-jump]").forEach(a => a.onclick = e => { e.preventDefault(); document.getElementById("step-" + a.dataset.jump)?.scrollIntoView({ behavior: "smooth", block: "start" }); });
+
+  const bodies = {
+    request: () => m.issue ? `<details><summary>Ticket the agent received</summary><pre class="ticket">${esc(m.issue.body || "")}</pre></details>` : "",
+    build: () => m.steps?.length ? `<ul class="checklist">${m.steps.map(s => { const st = s.status === "completed" ? (s.conclusion === "success" || s.conclusion === "skipped" ? "done" : "fail") : s.status === "in_progress" ? "active" : "todo";
+      return `<li><span class="st ${st}">${st === "done" ? "✓" : st === "fail" ? "!" : ""}</span>${esc(s.name)}</li>`; }).join("")}</ul>` : "",
+    review: () => {
+      if (!m.pr) return "";
+      const v = m.visual, chg = v && v.changed !== null;
+      return `<div class="kv">
+        <div><small>Visual diff</small>${chg ? `<span class="big">${v.changed} of ${v.total}</span><br><span class="small muted">screenshots changed</span>` : `<b>Running…</b>`}</div>
+        <div><small>AI review</small>${m.review ? `<b>${/needs attention/i.test(m.review.text) ? "Has findings" : "Posted"}</b>` : "<b>Running…</b>"}</div>
+        <div><small>Change size</small><b>${m.pr.changed_files ?? "–"} files</b>${m.pr.additions != null ? `<br><span class="small muted">+${m.pr.additions} −${m.pr.deletions}</span>` : ""}</div></div>
+        ${chg && v.rows.length ? `<table class="vd">${v.rows.slice(0, 12).map(r => `<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td></tr>`).join("")}</table>` : ""}
+        ${chg ? `<p class="small muted" style="margin:8px 0 0">Compare against the ticket's “Done when”. Diff images are in the <a href="${v.url}" target="_blank" rel="noopener">Visual diff run</a>.</p>` : ""}
+        ${m.review ? `<div class="review">${esc(m.review.text.slice(0, 1600))}</div>` : ""}`;
+    },
+    preview: () => m.pr ? previewHTML(m) : "",
+    ship: () => m.pr && !m.pr.merged_at && m.pr.state === "open" ? `<a class="btn primary" href="${m.pr.html_url}" target="_blank" rel="noopener">Review &amp; merge on GitHub ↗</a>` : "",
+  };
+  // Patch each step in place, and only touch a part whose HTML changed, so the preview iframe doesn't reload on every poll.
+  const host = $("#steps");
+  if (host.children.length !== S.length) host.innerHTML = S.map(s => `<section class="card step" id="step-${s.key}"><div class="hd"></div><div class="bd"></div></section>`).join("");
+  S.forEach((s, i) => {
+    const sec = document.getElementById("step-" + s.key);
+    sec.classList.toggle("cur", s.key === cur);
+    const hd = `<header><h3><span class="st ${s.state}">${s.state === "active" ? "" : ICON[s.state] || i + 1}</span>${s.name}</h3>${statusPill(s.state)}</header><p class="desc">${esc(s.desc)}</p>`;
+    const b = bodies[s.key](); const bd = b ? `<div class="body">${b}</div>` : "";
+    const h = sec.querySelector(".hd"), d = sec.querySelector(".bd");
+    if (h._html !== hd) { h.innerHTML = hd; h._html = hd; }
+    if (d._html !== bd) { d.innerHTML = bd; d._html = bd; if (s.key === "preview") wirePreview(m); }
+  });
+}
+function previewURL(m) {
+  const u = m.preview.url.replace(/\/$/, "");
+  return `${u}/?brand=${prevOpts.brand}&theme=${prevOpts.theme}`;
+}
+function previewHTML(m) {
+  if (!m.preview?.url) return `<div class="frame"><div class="placeholder">${m.preview?.pending ? "Building the preview…" : "Waiting for a Vercel preview."}</div></div>`;
+  const b = (k, v, label) => `<button data-${k}="${v}" aria-pressed="${prevOpts[k] === v}">${label}</button>`;
+  return `<div class="preview"><div class="bar">
+      <span style="display:flex;gap:8px;flex-wrap:wrap"><span class="seg">${b("brand", "pebble", "Pebble")}${b("brand", "partner", "Partner")}</span>
+      <span class="seg">${b("theme", "light", "Light")}${b("theme", "dark", "Dark")}</span>
+      <span class="seg">${b("size", "desktop", "Desktop")}${b("size", "mobile", "Mobile")}</span></span>
+      ${m.preview.demo ? "" : `<a class="small" href="${previewURL(m)}" target="_blank" rel="noopener">Open in a new tab ↗</a>`}</div>
+    <div class="frame ${prevOpts.size}">${m.preview.demo ? `<div class="placeholder">In a live run, the Vercel preview of the PR loads here.</div>` : `<iframe id="pframe" title="Preview of the PR" src="${previewURL(m)}"></iframe>`}</div>
+    <p class="small muted" style="margin:8px 0 0">Blank frame? Vercel's preview protection blocks embedding. Turn it off for this sandbox under Vercel → Settings → Deployment Protection, or use “Open in a new tab”.</p></div>`;
+}
+function wirePreview(m) {
+  document.querySelectorAll(".preview [data-brand],.preview [data-theme],.preview [data-size]").forEach(btn => btn.onclick = () => {
+    const k = ["brand", "theme", "size"].find(x => btn.dataset[x]); prevOpts[k] = btn.dataset[k];
+    const d = document.querySelector("#step-preview .bd");
+    if (d) { const bd = `<div class="body">${previewHTML(m)}</div>`; d.innerHTML = bd; d._html = bd; wirePreview(m); }
+  });
+}
+function updateLive() {
+  const el = $("#live");
+  if (DEMO) { el.className = "pill acc"; el.innerHTML = "Demo data"; return; }
+  if (rate.left === null) { el.className = "pill"; el.textContent = "Live"; return; }
+  el.className = "pill " + (rate.left < 10 ? "bad" : "ok");
+  el.innerHTML = `<span class="dot"></span>Live · ${rate.left} calls left`;
+}
+route();
+</script>
+</body>
+</html>
