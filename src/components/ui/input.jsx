@@ -1,12 +1,12 @@
 import * as React from "react"
 import { cn } from "../../lib/utils"
 
-// shadcn/ui Input (defaults).
+// shadcn/ui Input, restyled to the legacy field (bottom border, field tokens).
 const Input = React.forwardRef(({ className, type, ...props }, ref) => (
   <input
     type={type}
     className={cn(
-      "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+      "w-full rounded-t border-b-2 border-field-border bg-field p-4 text-lg font-light text-foreground shadow placeholder:text-field-placeholder focus:border-field-focus focus:outline-none disabled:cursor-not-allowed disabled:bg-disabled disabled:text-disabled-foreground",
       className,
     )}
     ref={ref}

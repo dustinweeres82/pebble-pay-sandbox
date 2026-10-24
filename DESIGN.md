@@ -79,6 +79,26 @@ Brands that define only shadcn roles (Partner) get fallbacks derived from them i
 emphasis equals the intent, and the shared roles map to `accent-foreground`, `foreground`, `ring`,
 `muted`, `muted-foreground`, `card` and `input`.
 
+## Legacy ↔ React mapping
+
+| Legacy template | React component |
+| --- | --- |
+| `button({ theme: "primary", themeColor: "general" })` | `<Button>` (`variant="default"`) |
+| `button({ theme: "secondary", themeColor: "general" })` | `<Button variant="outline">` (alias `secondary`) |
+| `button({ theme: "primary", themeColor: "caution" })` | `<Button variant="caution">` |
+| `button({ theme: "primary", themeColor: "destruction" })` | `<Button variant="destructive">` |
+| `button({ disabled: true })` | `<Button disabled>` |
+| _(no legacy equivalent)_ | `<Button variant="ghost">`, `<Button variant="link">` |
+| `alert({ theme: "info" })` | `<Alert>` (`variant="default"`) with `AlertIcon`, `AlertContent`, `AlertTitle`, `AlertDescription` |
+| `alert({ theme: "success" })` | `<Alert variant="success">` |
+| `alert({ theme: "caution" })` | `<Alert variant="warning">` |
+| `alert({ theme: "destruction" })` | `<Alert variant="destructive">` |
+| `badge({ status: "paid" })` | `<Badge variant="success">` |
+| `badge({ status: "pending" })` | `<Badge variant="warning">` |
+| `badge({ status: "overdue" })` | `<Badge variant="destructive">` |
+| `badge({ status: "new" })` | `<Badge variant="info">` |
+| `textField({ ... })` | `<Input>` inside a `<label>` (label and description spans are markup, not part of `Input`) |
+
 ## Rules for code changes
 
 - Write class names in full (Tailwind scans source); no string-built class names.

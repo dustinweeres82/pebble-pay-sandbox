@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import * as legacy from "./legacy/templates"
 import { Button } from "./components/ui/button"
-import { Alert, AlertTitle, AlertDescription } from "./components/ui/alert"
+import { Alert, AlertIcon, AlertContent, AlertTitle, AlertDescription } from "./components/ui/alert"
 import { Badge } from "./components/ui/badge"
 import { Input } from "./components/ui/input"
 
@@ -102,33 +102,39 @@ export default function App() {
           <Section id="react-buttons" title="Buttons">
             <Button>Get paid</Button>
             <Button variant="outline">Not now</Button>
-            <Button variant="secondary">Review payout</Button>
+            <Button variant="caution">Review payout</Button>
             <Button variant="destructive">Cancel advance</Button>
             <Button disabled>Please wait</Button>
           </Section>
           <Section id="react-alerts" title="Alerts">
             <Alert>
-              <AlertTitle>Payday is Friday</AlertTitle>
-              <AlertDescription>Advances repay automatically.</AlertDescription>
+              <AlertIcon>i</AlertIcon>
+              <AlertContent>
+                <AlertTitle>Payday is Friday</AlertTitle>
+                <AlertDescription>Advances repay automatically.</AlertDescription>
+              </AlertContent>
             </Alert>
             <Alert variant="destructive">
-              <AlertTitle>Payment failed</AlertTitle>
-              <AlertDescription>Reconnect your bank account.</AlertDescription>
+              <AlertIcon>▲</AlertIcon>
+              <AlertContent>
+                <AlertTitle>Payment failed</AlertTitle>
+                <AlertDescription>Reconnect your bank account.</AlertDescription>
+              </AlertContent>
             </Alert>
           </Section>
           <Section id="react-badges" title="Badges">
             <div className="flex flex-wrap gap-2">
-              <Badge>Paid</Badge>
-              <Badge variant="secondary">Pending</Badge>
+              <Badge variant="success">Paid</Badge>
+              <Badge variant="warning">Pending</Badge>
               <Badge variant="destructive">Overdue</Badge>
-              <Badge variant="outline">New</Badge>
+              <Badge variant="info">New</Badge>
             </div>
           </Section>
           <Section id="react-field" title="Text field">
             <label className="flex flex-col gap-1">
-              <span className="text-sm font-medium">Email</span>
+              <span className="font-semibold text-foreground">Email</span>
+              <span className="text-base font-light italic text-foreground">We'll send your pay stubs here.</span>
               <Input placeholder="you@example.com" />
-              <span className="text-sm text-muted-foreground">We'll send your pay stubs here.</span>
             </label>
           </Section>
         </div>
