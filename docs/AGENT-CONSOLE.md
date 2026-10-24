@@ -11,6 +11,9 @@ Sign-in works on the Vercel production address only, not on `localhost` (plain `
 - `api/callback.js` swaps GitHub's one-time code for a token and keeps it in an encrypted, httpOnly cookie. Page scripts never see it.
 - `api/gh.js` calls GitHub as you, but only for this repo, and only these writes: create an issue, add a label, remove the `agent` label.
 - `api/me.js` and `api/logout.js` show who's signed in and sign you out.
+- `api/reset.js` powers **Reset demo** (repo admins only): closes PEB pull requests, deletes their branches,
+  forces `main` back to the `demo-start` tag, removes the `agent` label from PEB tickets and reopens them,
+  and closes requests made with "Write a new request". Linear follows through the GitHub sync.
 - The app secret lives in Vercel's environment variables, never in the repo.
 
 ## 1. Register a GitHub App (about 5 minutes)
@@ -28,7 +31,8 @@ Sign-in works on the Vercel production address only, not on `localhost` (plain `
    - Actions: Read-only
    - Checks: Read-only
    - Deployments: Read-only
-   - Pull requests: Read-only
+   - Pull requests: **Read and write** (Reset demo closes PRs)
+   - Contents: **Read and write** (Reset demo moves `main` back and deletes PEB branches)
    - Metadata: Read-only (set automatically)
 4. **Where can this GitHub App be installed?** Only on this account.
 5. Click **Create GitHub App**.

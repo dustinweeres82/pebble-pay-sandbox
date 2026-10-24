@@ -3,20 +3,27 @@
 Base branch: main (after PEB-1 is merged)
 
 ## Why
-Today a color, dark-mode or brand change has to be repeated in every legacy template.
-After this, it's made once in the theme.
+Step 1 of 3, continued. Today a color, dark-mode or brand change has to be repeated in every
+legacy template. After this, it's made once in the theme, and the Partner brand reaches the
+legacy templates too.
 
 ## Do
 - In `src/legacy/templates.js`, replace every palette class and `dark:` variant with semantic tokens:
-  - button fills → `bg-<intent>` + `text-primary-foreground`; secondary theme → `bg-background` + `text-<intent>`;
+  - buttons → `bg-<intent>` + `text-primary-foreground`; secondary theme → `bg-background` + `text-<intent>`;
     hover/active → `<intent>-hover` / `<intent>-active` (caution uses `caution` for the fill and `warning-*` for states);
     `on-hover`, `on-active`, `focus-border`, `disabled`, `disabled-foreground`
-  - alerts → `<intent>-subtle` surface, `<intent>-emphasis` border and icon, `text-foreground` (caution → warning, destruction → destructive)
+  - text button, breadcrumb → `text-primary`; title, labels, table text → `text-foreground`
+  - alerts → `<intent>-subtle` surface, `<intent>-emphasis` border and icon, `text-foreground`
+    (caution → warning, destruction → destructive)
   - badges → `bg-success` / `bg-warning` / `bg-destructive` / `bg-info` + `text-primary-foreground`
-  - text field → `field`, `field-border`, `field-focus`, `field-placeholder`, `text-foreground`
-- Keep the function signatures the same.
+  - fields and selects → `field`, `border`, `field-border`, `field-focus`, `field-placeholder`, `field-help`, `disabled*`
+  - table → `border`, striped rows `bg-card`
+  - nav → `sidebar`, `sidebar-foreground`, `sidebar-muted`, `sidebar-primary`, `sidebar-accent`, `sidebar-border`
+  - support banner → `bg-muted`
+- Keep every function signature the same. Don't touch `src/pages/` or `src/components/ui/`.
 
 ## Done when
 - `src/legacy/` has no palette classes and no `dark:`.
-- Visual diff: **0 Pebble screenshots changed.** Partner · legacy-* screenshots change (expected:
-  the second brand now reaches the legacy templates). Nothing in react-* changes.
+- Visual diff: **0 Pebble screenshots changed.** Partner · payouts-\* and create-\* change, and the
+  nav changes on every page (expected: the stock-shadcn colors now reach the legacy templates).
+  Nothing in `components-*` changes except the nav.

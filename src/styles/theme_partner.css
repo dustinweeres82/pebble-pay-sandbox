@@ -1,55 +1,70 @@
 /*
-  Partner brand — a placeholder second theme (think white-label partner).
-  It only defines the shadcn roles.
+  Partner brand — the second brand, on stock shadcn/ui values (the "neutral" base color).
+  Think white-label partner embedding Pebble Pay: it should look like off-the-shelf shadcn.
+  It only defines the stock shadcn roles (plus success / warning / info, which shadcn's
+  extended palettes add). Don't edit it for design-system work: new Pebble roles reach
+  Partner through the fallbacks in shadcn_base.css.
 */
 :root[data-brand="partner"] {
-  --background: #fff7f2;
-  --foreground: #3b1d12;
+  --background: #ffffff;
+  --foreground: #0a0a0a;
   --card: #ffffff;
-  --card-foreground: #3b1d12;
-  --primary: #e4572e;
-  --primary-foreground: #ffffff;
-  --secondary: #fff7f2;
-  --secondary-foreground: #e4572e;
-  --muted: #fde8dc;
-  --muted-foreground: #8a4a33;
-  --accent: #fde8dc;
-  --accent-foreground: #3b1d12;
-  --destructive: #b42318;
-  --destructive-foreground: #ffffff;
-  --success: #12b76a;
-  --success-foreground: #ffffff;
-  --warning: #f79009;
-  --warning-foreground: #3b1d12;
-  --info: #2e90fa;
-  --info-foreground: #ffffff;
-  --border: #f5cfbd;
-  --input: #f5cfbd;
-  --ring: #e4572e;
+  --card-foreground: #0a0a0a;
+  --primary: #171717;
+  --primary-foreground: #fafafa;
+  --secondary: #f5f5f5;
+  --secondary-foreground: #171717;
+  --muted: #f5f5f5;
+  --muted-foreground: #737373;
+  --accent: #f5f5f5;
+  --accent-foreground: #171717;
+  --destructive: #dc2626;
+  --destructive-foreground: #fafafa;
+  --success: #16a34a;
+  --success-foreground: #fafafa;
+  --warning: #f59e0b;
+  --warning-foreground: #171717;
+  --info: #2563eb;
+  --info-foreground: #fafafa;
+  --border: #e5e5e5;
+  --input: #e5e5e5;
+  --ring: #a3a3a3;
+  --sidebar: #fafafa;
+  --sidebar-foreground: #0a0a0a;
+  --sidebar-accent: #f5f5f5;
+  --sidebar-muted: #737373;
+  --sidebar-primary: #171717;
+  --sidebar-border: #e5e5e5;
 }
 
 :root[data-brand="partner"][data-theme="dark"] {
-  --background: #24120b;
-  --foreground: #fde8dc;
-  --card: #331a10;
-  --card-foreground: #fde8dc;
-  --primary: #ff7a50;
-  --primary-foreground: #24120b;
-  --secondary: #24120b;
-  --secondary-foreground: #ff7a50;
-  --muted: #3d2015;
-  --muted-foreground: #f2b8a2;
-  --accent: #3d2015;
-  --accent-foreground: #fde8dc;
-  --destructive: #f97066;
-  --destructive-foreground: #24120b;
-  --success: #32d583;
-  --success-foreground: #24120b;
-  --warning: #fdb022;
-  --warning-foreground: #24120b;
-  --info: #53b1fd;
-  --info-foreground: #24120b;
-  --border: #5c2e1d;
-  --input: #5c2e1d;
-  --ring: #ff7a50;
+  --background: #0a0a0a;
+  --foreground: #fafafa;
+  --card: #171717;
+  --card-foreground: #fafafa;
+  --primary: #e5e5e5;
+  --primary-foreground: #171717;
+  --secondary: #262626;
+  --secondary-foreground: #fafafa;
+  --muted: #262626;
+  --muted-foreground: #a3a3a3;
+  --accent: #262626;
+  --accent-foreground: #fafafa;
+  --destructive: #f87171;
+  --destructive-foreground: #171717;
+  --success: #4ade80;
+  --success-foreground: #171717;
+  --warning: #fbbf24;
+  --warning-foreground: #171717;
+  --info: #60a5fa;
+  --info-foreground: #171717;
+  --border: #262626;
+  --input: #404040;
+  --ring: #737373;
+  --sidebar: #171717;
+  --sidebar-foreground: #fafafa;
+  --sidebar-accent: #262626;
+  --sidebar-muted: #a3a3a3;
+  --sidebar-primary: #e5e5e5;
+  --sidebar-border: #262626;
 }

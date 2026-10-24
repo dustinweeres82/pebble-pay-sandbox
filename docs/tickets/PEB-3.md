@@ -1,21 +1,26 @@
-# PEB-3 · Restyle shadcn components to the legacy look
+# PEB-3 · Align shadcn components to Pebble's tokens
 
 Base branch: main (after PEB-2 is merged)
 
 ## Why
-Users see the legacy look everywhere except the newer React screens. Give the React
-components the same look through the same tokens, keeping shadcn's structure and props.
+Step 2 of 3. Before any page moves to React, the React components should speak the same token
+language as the legacy templates. We keep shadcn's shapes, sizes and structure (stock look),
+and only point colors and states at the semantic tokens, so Partner stays off-the-shelf shadcn.
 
 ## Do
-- `src/components/ui/button.jsx`: pill (`rounded-full`), 4px border, semibold, `text-xl`, full width at the default size.
-  Variants: `default` (primary fill), `secondary`/`outline` (background + primary text), `caution` (new), `destructive`,
-  `ghost`, `link`. Hover/active/disabled/focus use the same tokens as the legacy button.
-- `src/components/ui/alert.jsx`: 4px top border in `<intent>-emphasis`, `<intent>-subtle` surface, `text-foreground`.
-  Variants `default` (info), `success`, `warning`, `destructive`. Add `AlertIcon` and `AlertContent`.
-- `src/components/ui/badge.jsx`: status pill. Add `success`, `warning`, `info` variants.
-- `src/components/ui/input.jsx`: legacy field (bottom border, `field-*` tokens).
-- Update the React column in `src/App.jsx` to use the new variants with the same content as the legacy column.
-- Add a legacy ↔ React mapping table to DESIGN.md.
+- `src/components/ui/badge.jsx`: add `success`, `warning`, `info` variants
+  (`bg-<intent> text-primary-foreground`, same shape as `default`).
+- `src/components/ui/alert.jsx`: add `info`, `success`, `warning` variants using `<intent>-subtle`
+  surface and `<intent>-emphasis` border; point `destructive` at `destructive-subtle` / `destructive-emphasis`.
+  Keep the stock radius, border width and padding.
+- `src/components/ui/button.jsx`: add a `caution` variant (`bg-caution text-primary-foreground`, stock shape).
+- `input.jsx`, `native-select.jsx`, `textarea.jsx`: background `bg-field`, border `border-field-border`,
+  placeholder `placeholder:text-field-placeholder`, focus ring `ring-field-focus`. Keep stock height and radius.
+- On the Components page (`src/pages/Components.jsx`), add one example of each new variant.
+- Add a "shadcn on Pebble tokens" table to DESIGN.md (component → variant → tokens).
+- Don't change shapes, sizes or the existing variants' structure, and don't touch `src/legacy/` or the product pages.
 
 ## Done when
-- Only react-* screenshots change. In Pebble, each React section looks the same as its legacy section.
+- Visual diff: only `components-*` screenshots change.
+  - Pebble: field borders and the new variant rows change.
+  - Partner: only the new variant rows appear; existing variants look the same (stock shadcn).

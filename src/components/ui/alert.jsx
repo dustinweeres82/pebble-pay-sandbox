@@ -14,7 +14,7 @@ const alertVariants = cva("relative w-full rounded-lg border px-4 py-3 text-sm",
 })
 
 function Alert({ className, variant, ...props }) {
-  return <div role="alert" className={cn(alertVariants({ variant }), className)} {...props} />
+  return <div role="alert" data-src="ui/alert" className={cn(alertVariants({ variant }), className)} {...props} />
 }
 
 function AlertTitle({ className, ...props }) {

@@ -1,138 +1,96 @@
 import { useEffect, useState } from "react"
 import * as legacy from "./legacy/templates"
-import { Button } from "./components/ui/button"
-import { Alert, AlertTitle, AlertDescription } from "./components/ui/alert"
-import { Badge } from "./components/ui/badge"
-import { Input } from "./components/ui/input"
+import { Legacy } from "./shell"
+import Payouts from "./pages/Payouts"
+import CreatePayment from "./pages/CreatePayment"
+import Components from "./pages/Components"
 
+// Demo app: two product pages plus the component gallery.
+// URL: ?brand=pebble|partner&theme=light|dark&inspect=1#payouts|create|components
+// The demo toolbar is outside every [data-testid], so it never shows up in the Visual diff.
+
+const PAGES = { payouts: "Off-cycle payouts", create: "Create a payment", components: "Components" }
 const params = new URLSearchParams(window.location.search)
+const pageFromHash = () => {
+  const h = window.location.hash.replace("#", "")
+  return PAGES[h] ? h : "payouts"
+}
 
-function Toggle({ label, value, options, onChange }) {
+function Segmented({ value, options, onChange, label }) {
   return (
-    <div className="flex items-center gap-2 text-sm">
-      <span className="text-muted-foreground">{label}</span>
-      {options.map((o) => (
+    <div role="group" aria-label={label} className="inline-flex overflow-hidden rounded-md border border-white/20">
+      {Object.entries(options).map(([key, text]) => (
         <button
-          key={o}
+          key={key}
           type="button"
-          onClick={() => onChange(o)}
-          className={
-            "rounded-full border px-3 py-1 " +
-            (value === o ? "bg-foreground text-background" : "bg-card text-foreground")
-          }
+          aria-pressed={value === key}
+          onClick={() => onChange(key)}
+          className={"px-3 py-1.5 text-sm font-medium " + (value === key ? "bg-white text-stone-900" : "text-stone-200 hover:bg-white/10")}
         >
-          {o}
+          {text}
         </button>
       ))}
     </div>
   )
 }
 
-function Section({ id, title, children, html }) {
+function Check({ checked, onChange, children }) {
   return (
-    <section className="flex flex-col gap-3">
-      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{title}</h3>
-      {html ? (
-        <div data-testid={id} className="flex flex-col gap-3 rounded-lg bg-card p-5" dangerouslySetInnerHTML={{ __html: html }} />
-      ) : (
-        <div data-testid={id} className="flex flex-col gap-3 rounded-lg bg-card p-5">
-          {children}
-        </div>
-      )}
-    </section>
+    <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-stone-200">
+      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+      {children}
+    </label>
   )
 }
 
-// ---- Legacy column: server-template output ----
-const legacyButtons = [
-  legacy.button({ text: "Get paid", theme: "primary", themeColor: "general" }),
-  legacy.button({ text: "Not now", theme: "secondary", themeColor: "general" }),
-  legacy.button({ text: "Review payout", theme: "primary", themeColor: "caution" }),
-  legacy.button({ text: "Cancel advance", theme: "primary", themeColor: "destruction" }),
-  legacy.button({ text: "Please wait", theme: "primary", themeColor: "general", disabled: true }),
-].join("")
-
-const legacyAlerts = [
-  legacy.alert({ theme: "info", title: "Payday is Friday", body: "Advances repay automatically." }),
-  legacy.alert({ theme: "destruction", title: "Payment failed", body: "Reconnect your bank account." }),
-].join("")
-
-const legacyBadges = `<div class="flex flex-wrap gap-2">${[
-  legacy.badge({ status: "paid", label: "Paid" }),
-  legacy.badge({ status: "pending", label: "Pending" }),
-  legacy.badge({ status: "overdue", label: "Overdue" }),
-  legacy.badge({ status: "new", label: "New" }),
-].join("")}</div>`
-
-const legacyField = legacy.textField({ label: "Email", description: "We'll send your pay stubs here.", placeholder: "you@example.com" })
-
 export default function App() {
-  const [theme, setTheme] = useState(params.get("theme") ?? "light")
+  const [page, setPage] = useState(pageFromHash)
   const [brand, setBrand] = useState(params.get("brand") ?? "pebble")
+  const [dark, setDark] = useState(params.get("theme") === "dark")
+  const [inspect, setInspect] = useState(params.has("inspect"))
 
   useEffect(() => {
-    document.documentElement.dataset.theme = theme
-    document.documentElement.dataset.brand = brand
-  }, [theme, brand])
+    const root = document.documentElement
+    root.dataset.theme = dark ? "dark" : "light"
+    root.dataset.brand = brand
+    if (inspect) root.dataset.inspect = ""
+    else delete root.dataset.inspect
+  }, [brand, dark, inspect])
+
+  useEffect(() => {
+    const onHash = () => { setPage(pageFromHash()); window.scrollTo(0, 0) }
+    // Legacy templates can't take React handlers, so links carry data-go="<page>".
+    const onClick = (e) => {
+      const el = e.target.closest("[data-go]")
+      if (!el) return
+      e.preventDefault()
+      window.location.hash = el.dataset.go
+    }
+    window.addEventListener("hashchange", onHash)
+    document.addEventListener("click", onClick)
+    return () => { window.removeEventListener("hashchange", onHash); document.removeEventListener("click", onClick) }
+  }, [])
+
+  const go = (p) => { window.location.hash = p }
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-10">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-semibold">Pebble Pay</h1>
-          <p className="text-muted-foreground">Design system sandbox — legacy templates and React components, side by side.</p>
-        </div>
-        <div className="flex flex-col gap-2">
-          <Toggle label="Mode" value={theme} options={["light", "dark"]} onChange={setTheme} />
-          <Toggle label="Brand" value={brand} options={["pebble", "partner"]} onChange={setBrand} />
-        </div>
-      </header>
+    <div className="flex min-h-screen flex-col">
+      <div className="demo-toolbar sticky top-0 z-20 flex flex-wrap items-center gap-x-5 gap-y-2 bg-stone-900 px-5 py-3 text-white">
+        <b className="text-sm">Pebble Pay sandbox</b>
+        <Segmented label="Page" value={page} options={PAGES} onChange={go} />
+        <Segmented label="Brand" value={brand} options={{ pebble: "Pebble", partner: "Partner · stock shadcn" }} onChange={setBrand} />
+        <Check checked={dark} onChange={setDark}>Dark</Check>
+        <Check checked={inspect} onChange={setInspect}>Show components</Check>
+      </div>
 
-      <main className="grid gap-8 md:grid-cols-2">
-        <div className="flex flex-col gap-6">
-          <h2 className="text-xl font-semibold">Legacy templates <span className="text-sm font-normal text-muted-foreground">(server-rendered)</span></h2>
-          <Section id="legacy-buttons" title="Buttons" html={legacyButtons} />
-          <Section id="legacy-alerts" title="Alerts" html={legacyAlerts} />
-          <Section id="legacy-badges" title="Badges" html={legacyBadges} />
-          <Section id="legacy-field" title="Text field" html={legacyField} />
-        </div>
-
-        <div className="flex flex-col gap-6">
-          <h2 className="text-xl font-semibold">React <span className="text-sm font-normal text-muted-foreground">(shadcn/ui)</span></h2>
-          <Section id="react-buttons" title="Buttons">
-            <Button>Get paid</Button>
-            <Button variant="outline">Not now</Button>
-            <Button variant="secondary">Review payout</Button>
-            <Button variant="destructive">Cancel advance</Button>
-            <Button disabled>Please wait</Button>
-          </Section>
-          <Section id="react-alerts" title="Alerts">
-            <Alert>
-              <AlertTitle>Payday is Friday</AlertTitle>
-              <AlertDescription>Advances repay automatically.</AlertDescription>
-            </Alert>
-            <Alert variant="destructive">
-              <AlertTitle>Payment failed</AlertTitle>
-              <AlertDescription>Reconnect your bank account.</AlertDescription>
-            </Alert>
-          </Section>
-          <Section id="react-badges" title="Badges">
-            <div className="flex flex-wrap gap-2">
-              <Badge>Paid</Badge>
-              <Badge variant="secondary">Pending</Badge>
-              <Badge variant="destructive">Overdue</Badge>
-              <Badge variant="outline">New</Badge>
-            </div>
-          </Section>
-          <Section id="react-field" title="Text field">
-            <label className="flex flex-col gap-1">
-              <span className="text-sm font-medium">Email</span>
-              <Input placeholder="you@example.com" />
-              <span className="text-sm text-muted-foreground">We'll send your pay stubs here.</span>
-            </label>
-          </Section>
-        </div>
-      </main>
+      <div className="flex flex-1 bg-background text-foreground">
+        <Legacy id="nav" html={legacy.nav({ active: page === "components" ? "" : "payouts" })} className="shrink-0" />
+        <main className="min-w-0 flex-1">
+          {page === "payouts" && <Payouts />}
+          {page === "create" && <CreatePayment />}
+          {page === "components" && <Components />}
+        </main>
+      </div>
     </div>
   )
 }

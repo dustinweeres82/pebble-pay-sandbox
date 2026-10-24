@@ -1,35 +1,37 @@
-# Demo script (10–12 minutes)
+# Demo script (12–15 minutes)
 
 ## Before the demo
-- PEB-1, PEB-2 and PEB-3 are merged (run them through the agent the day before, or open PRs
-  from the `step-*` branches and merge them in order). Keep their PRs to show.
-- PEB-4 is in Linear, unlabelled. The app (`main`) is deployed on Vercel.
-- Tabs open: Linear board, the GitHub repo, the Vercel production URL, ZZDS-V2 in Figma.
+- Reset: press **Reset demo** at the bottom of the console home page (signed in). It puts `main` back to the
+  legacy pages and the PEB tickets back to unstarted. (`reset-pebble-demo.sh` still works from the terminal.)
+- Decide how far to pre-run. Suggested: run PEB-1 and PEB-2 the day before and merge them; keep their PRs open in tabs.
+- Tabs: the Vercel production site, the agent console (`/agent/`, signed in), Linear, ZZDS-V2 in Figma.
 
 ## 1. The problem (2 min)
-- Open the app at the **before** state: in Vercel → Deployments, open the deployment of the
-  "Before" commit (or run `git checkout a62adaa && npm run dev` locally). Legacy and React columns look different; switch Brand to Partner — the legacy
-  column ignores it.
-- "This is our situation in miniature: Echo is the legacy column, shadcn is the React column."
+- Open the production site on **Off-cycle payouts**. Turn on **Show components**: every label is `legacy.…`.
+- Switch Brand to **Partner · stock shadcn**. Only the page background changes; the buttons, fields and
+  nav keep Pebble's colors, because the legacy templates hardcode them.
+- Open **Components**: the React components look nothing like the pages.
+- "That's our situation: Echo on the pages, shadcn in React, and a second brand that should stay stock."
 
-## 2. The order of migration (4 min) — show the merged PRs
-- **PEB-1 Tokens**: visual diff comment "0 of 32 changed". "We added the vocabulary without touching a pixel."
-- **PEB-2 Legacy on tokens**: "0 Pebble screenshots changed"; Partner legacy sections changed —
-  "the second brand now reaches the old templates for free."
-- **PEB-3 React restyled**: only the React column changed, and now matches the legacy column.
-- ZZDS-V2 in Figma: same token names, same components. "Figma mirrors production."
+## 2. Step 1 — semantic tokens (3 min), from the merged PRs
+- **PEB-1**: Visual diff "0 of 68 changed". "We added the vocabulary without touching a pixel."
+- **PEB-2**: 0 Pebble screenshots changed; Partner's pages changed. Switch Brand on the site:
+  Partner now gets its own (stock) colors on the legacy pages. Toggle **Dark**: same.
 
-## 3. The agent, live (4 min)
-- In Linear, add the `agent` label to **PEB-4 · One yellow**. Talk through the ticket while it runs:
-  it says what to change, what *not* to change, and what the visual diff should show.
-- When the draft PR appears: one-line diff in `theme_pebble.css` + DESIGN.md.
-  Visual diff: **2 of 32 changed — the caution button in both columns.** Open the Vercel preview.
-  Read the AI review comment.
-- Merge. Linear moves PEB-4 to Done.
+## 3. The agent, live — step 2 (4 min)
+- In the console, press **Start** on **PEB-3 · Align shadcn components to Pebble's tokens**. Narrate the run.
+- When the PR lands: only `components-*` changed. On the Pebble brand the components now use Pebble's
+  intents; on Partner they look stock. Open the sandbox link and toggle brands.
 
-## 4. The pitch (1 min)
-- Small, single-purpose PRs with automatic previews and proof of "no visual change".
-- The agent holds scoped repo access; people review and merge.
+## 4. Step 3 — React (3 min)
+- Start **PEB-4 · Port the Off-cycle payouts page**. While it runs, show the ticket: same sections, same content,
+  different components.
+- On the preview: Show components → the page labels are now `ui/…`. Toggle Partner: stock shadcn page.
+- PEB-5 and PEB-6 finish the job; the last one deletes the legacy templates.
+
+## 5. The pitch (1 min)
+- Small, single-purpose PRs, each with a preview and proof of what changed visually.
+- The second brand stays off-the-shelf at every step.
 - Ask: run this on design-system tickets in `web-app`, starting with Echo on tokens.
 
-If the live run is slow: open the PR from `step-4-one-yellow` and walk through the same checks.
+If a live run is slow, open the console's demo mode (`/agent/?demo=1#run/PEB-1`) to show the flow.

@@ -44,7 +44,7 @@ for this repository only.
 1. Add the `agent` label to PEB-1 in Linear. It syncs to the GitHub issue and starts
    **Actions → Agent — implement ticket**. If the label doesn't sync, add `agent` on the GitHub issue.
 2. Within a few minutes: a draft PR `PEB-1 …`, then three checks on it — **Visual diff** (comment:
-   "0 of 32 screenshots changed"), the **Vercel** preview link, and **AI review**.
+   "0 of 68 screenshots changed"), the **Vercel** preview link, and **AI review**.
 3. Review, mark ready, merge. Linear moves PEB-1 to Done.
 
 Fallback without the agent: open a PR from the matching `step-*` branch into `main`.
