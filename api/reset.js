@@ -70,6 +70,8 @@ export default async function handler(req, res) {
     for (const i of issues) {
       const isTicket = TICKET.test(i.title) || /Ticket:\s*PEB-\d+/.test(i.body || "") || /linear\.app\/[^\s]*\/issue\/PEB-\d+/i.test(i.body || "")
       const labelled = i.labels.some((l) => l.name === "agent")
+      // Leave issues closed as duplicates or "not planned" alone (old copies of a ticket, past requests).
+      if (i.state === "closed" && ["duplicate", "not_planned"].includes(i.state_reason)) continue
       if (isTicket) {
         if (labelled) { await gh("DELETE", `/issues/${i.number}/labels/agent`); log.push(`Removed agent label from #${i.number}`) }
         if (i.state === "closed") { await gh("PATCH", `/issues/${i.number}`, { state: "open" }); log.push(`Reopened #${i.number}`) }
