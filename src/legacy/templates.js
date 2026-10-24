@@ -193,13 +193,13 @@ export function nav({ active }) {
     ["card", "Off-cycle payouts", "payouts", badge({ status: "new", label: "BETA", small: true })],
     ["gift", "Rewards"], ["dollar", "Tips"], ["gear", "Settings"],
   ]
-  return `<nav data-src="legacy.nav" class="flex h-full w-72 flex-col bg-ocean-900 py-6 text-white dark:bg-stone-900">
+  return `<nav data-src="legacy.nav" class="flex h-full w-80 flex-col bg-ocean-900 py-6 text-white dark:bg-stone-900">
     <div class="flex items-center gap-3 px-6 pb-6 text-2xl font-bold"><span class="size-8 rounded-lg bg-ocean-400"></span>Pebble Pay</div>
 
     ${items
       .map(([icon, label, page, extra]) => {
         const on = page === active
-        return `<a href="#${page || ""}" class="flex items-center gap-3 px-6 py-3 text-lg font-semibold ${on ? "bg-white/10" : "hover:bg-white/10"}"${go(page)}>
+        return `<a href="#${page || ""}" class="flex items-center gap-3 whitespace-nowrap px-6 py-3 text-lg font-semibold ${on ? "bg-white/10" : "hover:bg-white/10"}"${go(page)}>
           <svg class="size-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${ICONS[icon]}</svg>${label}${extra ? ` ${extra}` : ""}</a>`
       })
       .join("")}
