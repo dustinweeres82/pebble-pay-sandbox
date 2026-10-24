@@ -77,6 +77,42 @@ Design changes (for example, one yellow instead of two) come after, one token pe
 - Navigation: shadcn's `sidebar`, `sidebar-foreground`, `sidebar-primary`, `sidebar-accent`,
   `sidebar-border`, plus `sidebar-muted`.
 
+## Token table (Pebble values, light → dark)
+
+Per intent (`primary` ocean, `info` sky, `success` leaf, `warning` sun, `destructive` ember):
+
+| Role | Light | Dark |
+| --- | --- | --- |
+| `<intent>-hover` | `<hue>-200` | `<hue>-200` |
+| `<intent>-active` | `<hue>-700` | `<hue>-600` (warning: `sun-650`) |
+| `<intent>-subtle` | `<hue>-100` | `stone-700` |
+| `<intent>-emphasis` | `<hue>-500` | `<hue>-500` |
+
+Shared:
+
+| Role | Light | Dark | Partner fallback |
+| --- | --- | --- | --- |
+| `<intent>-hover` / `-active` | see above | see above | `<intent>` mixed 85% / 70% with `foreground` |
+| `<intent>-subtle` | see above | see above | `<intent>` 12% on `background` |
+| `<intent>-emphasis` | see above | see above | `<intent>` |
+| `caution` | `sun-650` | `sun-400` | `warning` |
+| `on-hover` | `stone-800` | `stone-800` | `accent-foreground` |
+| `on-active` | `stone-200` | `stone-900` | `accent-foreground` |
+| `focus-border` | `stone-600` | `stone-50` | `ring` |
+| `disabled` | `stone-200` | `stone-700` | `muted` |
+| `disabled-foreground` | `stone-500` | `stone-400` | `muted-foreground` |
+| `field` | `white` | `stone-900` | `background` |
+| `field-border` | `stone-300` | `stone-700` | `input` |
+| `field-focus` | `sky-600` | `sky-400` | `ring` |
+| `field-placeholder` | `stone-500` | `stone-500` | `muted-foreground` |
+| `field-help` | `stone-500` | `stone-400` | `muted-foreground` |
+| `sidebar` | `ocean-900` | `stone-900` | Partner defines it |
+| `sidebar-foreground` | `white` | `white` | Partner defines it |
+| `sidebar-muted` | `stone-300` | `stone-300` | Partner defines it |
+| `sidebar-primary` | `ocean-400` | `ocean-400` | Partner defines it |
+| `sidebar-accent` | `white` at 10% | `white` at 10% | Partner defines it |
+| `sidebar-border` | `white` at 15% | `white` at 15% | Partner defines it |
+
 ## Rules for code changes
 
 - Write class names in full (Tailwind scans source); no string-built class names.
