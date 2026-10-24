@@ -75,10 +75,12 @@ export default async function handler(req, res) {
       if (isTicket) {
         if (labelled) { await gh("DELETE", `/issues/${i.number}/labels/agent`); log.push(`Removed agent label from #${i.number}`) }
         if (i.state === "closed") { await gh("PATCH", `/issues/${i.number}`, { state: "open" }); log.push(`Reopened #${i.number}`) }
-      } else if (labelled) {
-        await gh("DELETE", `/issues/${i.number}/labels/agent`)
+      } else if (labelled || i.state === "open") {
+        // Anything else is a one-off: a console request (REQ-…) or a test ticket deleted in Linear,
+        // which leaves its GitHub copy open. Close it so the console's lists stay clean.
+        if (labelled) await gh("DELETE", `/issues/${i.number}/labels/agent`)
         if (i.state === "open") await gh("PATCH", `/issues/${i.number}`, { state: "closed", state_reason: "not_planned" })
-        log.push(`Closed request #${i.number}`)
+        log.push(`Closed #${i.number} (not a PEB ticket)`)
       }
     }
     res.status(200).json({ ok: true, log })

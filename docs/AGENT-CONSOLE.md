@@ -13,7 +13,9 @@ Sign-in works on the Vercel production address only, not on `localhost` (plain `
 - `api/me.js` and `api/logout.js` show who's signed in and sign you out.
 - `api/reset.js` powers **Reset demo** (repo admins only): closes PEB pull requests, deletes their branches,
   forces `main` back to the `demo-start` tag, removes the `agent` label from PEB tickets and reopens them,
-  and closes requests made with "Write a new request". Linear follows through the GitHub sync.
+  and closes every other open issue (console requests, or test tickets deleted in Linear, whose GitHub copy
+  stays open). Linear follows through the GitHub sync. To drop a ticket, set it to Canceled in Linear rather
+  than deleting it.
 - The app secret lives in Vercel's environment variables, never in the repo.
 
 ## 1. Register a GitHub App (about 5 minutes)
