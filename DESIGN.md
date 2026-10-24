@@ -20,11 +20,15 @@ ZayZoon. Figma variables mirror the tokens below one to one.
 
 ## The app
 
-| Page | Route | Starts on | Visual diff sections |
-| --- | --- | --- | --- |
-| Off-cycle payouts | `#payouts` | legacy templates | `nav`, `header`, `switcher`, `filters`, `table` |
-| Create a payment | `#create` | legacy templates | `nav`, `header`, `alert`, `form`, `actions`, `support` |
-| Components | `#components` | React (shadcn/ui) | `nav`, `buttons`, `badges`, `alerts`, `fields`, `table` |
+| Page | Route | Pebble starts on | Partner renders | Visual diff sections |
+| --- | --- | --- | --- | --- |
+| Off-cycle payouts | `#payouts` | `PayoutsLegacy.jsx` (legacy templates) | `PayoutsReact.jsx` | `nav`, `header`, `switcher`, `filters`, `table` |
+| Create a payment | `#create` | `CreatePaymentLegacy.jsx` | `CreatePaymentReact.jsx` | `nav`, `header`, `alert`, `form`, `actions`, `support` |
+| Components | `#components` | React (shadcn/ui) | same | `nav`, `buttons`, `badges`, `alerts`, `fields`, `table` |
+
+The nav is `legacy.nav` for Pebble and `src/components/AppNav.jsx` for Partner. Partner is new work,
+so it's built with shadcn from the start; Pebble is the existing product on the legacy templates.
+Both versions of a page share section names and content, so a port shows up as a clean visual diff.
 
 Each section is a `data-testid`. CI screenshots every section in 2 brands × 2 modes:
 **68 screenshots**, named `<brand>-<mode>-<page>-<section>`.
@@ -43,7 +47,8 @@ appears in a screenshot. "Show components" outlines each element with its source
 | Partner values (stock shadcn) | `src/styles/theme_partner.css` — don't edit for design-system work |
 | Legacy templates | `src/legacy/templates.js` |
 | React components | `src/components/ui/*.jsx` |
-| Pages | `src/pages/*.jsx`, shell in `src/App.jsx` |
+| Pages | `src/pages/*Legacy.jsx` (Pebble, legacy) and `src/pages/*React.jsx` (Partner, then both), shell in `src/App.jsx` |
+| React nav | `src/components/AppNav.jsx` |
 
 Mode and brand are attributes on `<html>`: `data-theme="light|dark"`, `data-brand="pebble|partner"`.
 
@@ -51,18 +56,18 @@ Mode and brand are attributes on `<html>`: `data-theme="light|dark"`, `data-bran
 
 **Step 1 — Semantic token alignment**
 1. **PEB-1 Tokens, no visual change.** Add every role the legacy templates need, valued at what they render today.
-2. **PEB-2 Legacy templates on tokens.** No visual change for Pebble. Expected: Partner's colors now
-   reach the legacy pages.
+2. **PEB-2 Legacy templates on tokens.** No visual change (0 of 68).
 
 **Step 2 — shadcn components on Pebble's tokens**
-3. **PEB-3** Point shadcn colors and states at the tokens and add the intent variants (success, warning,
-   info, caution). Stock shapes stay. Expected: only `components-*` changes.
+3. **PEB-3** Point shadcn colors and states at the tokens, add the intent variants (success, warning,
+   info, caution) and use them on the React pages. Stock shapes stay. Expected: `components-*` and
+   Partner's badges and alert change; Pebble's product pages don't.
 
 **Step 3 — React**
-4. **PEB-4** Port Off-cycle payouts to React.
-5. **PEB-5** Port Create a payment to React.
-6. **PEB-6** Port the nav and delete `src/legacy/`.
-   Expected for each: only that page's (or the nav's) sections change, from the legacy look to shadcn on tokens.
+4. **PEB-4** Pebble moves onto `PayoutsReact.jsx`; delete the legacy page.
+5. **PEB-5** Pebble moves onto `CreatePaymentReact.jsx`; delete the legacy page.
+6. **PEB-6** Pebble moves onto `AppNav`; delete `src/legacy/`.
+   Expected for each: only Pebble's sections for that page (or the nav) change. Partner doesn't change.
 
 Design changes (for example, one yellow instead of two) come after, one token per PR.
 
@@ -82,5 +87,5 @@ Design changes (for example, one yellow instead of two) come after, one token pe
 - Write class names in full (Tailwind scans source); no string-built class names.
 - A new role is added in three places: `theme_pebble.css` (light **and** dark), `shadcn_base.css`
   (mapping, plus a fallback derived from shadcn roles when Partner doesn't define it), and this file.
-- Keep `data-testid` names and section content when porting a page; only the components change.
+- Keep `data-testid` names and section content identical between a page's legacy and React versions.
 - Every PR states which screenshots it expects to change. CI posts the visual diff.

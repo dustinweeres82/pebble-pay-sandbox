@@ -1,7 +1,8 @@
 import * as legacy from "../legacy/templates"
 import { Legacy } from "../shell"
 
-// Create a payment (form). Every section starts on the legacy templates.
+// Create a payment on the legacy templates. Pebble renders this until PEB-5,
+// which moves Pebble onto CreatePaymentReact.jsx and deletes this file.
 
 const header = `<div class="flex flex-col gap-1">
   ${legacy.breadcrumb({ text: "Off-cycle payouts", go: "payouts" })}
@@ -31,7 +32,7 @@ const actions = `<div class="flex items-center justify-end gap-6">
 
 const support = legacy.supportBanner({ title: "Have questions?", body: "We're here for you.", action: "Contact support" })
 
-export default function CreatePayment() {
+export default function CreatePaymentLegacy() {
   return (
     <div className="flex min-h-full flex-col">
       <div className="flex max-w-5xl flex-col gap-8 px-10 py-9">

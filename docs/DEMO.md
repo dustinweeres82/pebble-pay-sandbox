@@ -8,25 +8,25 @@
 
 ## 1. The problem (2 min)
 - Open the production site on **Off-cycle payouts**. Turn on **Show components**: every label is `legacy.…`.
-- Switch Brand to **Partner · stock shadcn**. Only the page background changes; the buttons, fields and
-  nav keep Pebble's colors, because the legacy templates hardcode them.
-- Open **Components**: the React components look nothing like the pages.
-- "That's our situation: Echo on the pages, shadcn in React, and a second brand that should stay stock."
+- Switch Brand to **Partner · stock shadcn**: the same page, built with shadcn (labels are `ui/…`). That's how
+  new partner work is built. Same content, two component sets, two looks.
+- "That's our situation: Echo on the existing product, shadcn for new partner work. The goal is one set of
+  components, with Partner staying stock."
 
 ## 2. Step 1 — semantic tokens (3 min), from the merged PRs
 - **PEB-1**: Visual diff "0 of 68 changed". "We added the vocabulary without touching a pixel."
-- **PEB-2**: 0 Pebble screenshots changed; Partner's pages changed. Switch Brand on the site:
-  Partner now gets its own (stock) colors on the legacy pages. Toggle **Dark**: same.
+- **PEB-2**: 0 of 68 changed again. The legacy templates now read the same tokens as the React components.
 
 ## 3. The agent, live — step 2 (4 min)
 - In the console, press **Start** on **PEB-3 · Align shadcn components to Pebble's tokens**. Narrate the run.
-- When the PR lands: only `components-*` changed. On the Pebble brand the components now use Pebble's
-  intents; on Partner they look stock. Open the sandbox link and toggle brands.
+- When the PR lands: the Components page and Partner's status badges changed; Pebble's pages didn't.
+  Open the sandbox link and toggle brands.
 
 ## 4. Step 3 — React (3 min)
 - Start **PEB-4 · Port the Off-cycle payouts page**. While it runs, show the ticket: same sections, same content,
   different components.
-- On the preview: Show components → the page labels are now `ui/…`. Toggle Partner: stock shadcn page.
+- Visual diff: only Pebble's payouts sections changed; Partner's didn't. On the preview, Pebble's page labels
+  are now `ui/…` — it's the same page Partner uses, in Pebble's tokens.
 - PEB-5 and PEB-6 finish the job; the last one deletes the legacy templates.
 
 ## 5. The pitch (1 min)

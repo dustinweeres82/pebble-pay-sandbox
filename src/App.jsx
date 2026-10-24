@@ -1,11 +1,16 @@
 import { useEffect, useState } from "react"
 import * as legacy from "./legacy/templates"
 import { Legacy } from "./shell"
-import Payouts from "./pages/Payouts"
-import CreatePayment from "./pages/CreatePayment"
+import AppNav from "./components/AppNav"
+import PayoutsLegacy from "./pages/PayoutsLegacy"
+import PayoutsReact from "./pages/PayoutsReact"
+import CreatePaymentLegacy from "./pages/CreatePaymentLegacy"
+import CreatePaymentReact from "./pages/CreatePaymentReact"
 import Components from "./pages/Components"
 
 // Demo app: two product pages plus the component gallery.
+// Partner (new work, stock shadcn) renders the React pages; Pebble still renders the legacy ones.
+// The step-3 tickets move Pebble onto the React pages one at a time and delete the legacy files.
 // URL: ?brand=pebble|partner&theme=light|dark&inspect=1#payouts|create|components
 // The demo toolbar is outside every [data-testid], so it never shows up in the Visual diff.
 
@@ -72,6 +77,7 @@ export default function App() {
   }, [])
 
   const go = (p) => { window.location.hash = p }
+  const active = page === "components" ? "" : "payouts"
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -84,10 +90,14 @@ export default function App() {
       </div>
 
       <div className="flex flex-1 bg-background text-foreground">
-        <Legacy id="nav" html={legacy.nav({ active: page === "components" ? "" : "payouts" })} className="shrink-0" />
+        {brand === "partner" ? (
+          <div data-testid="nav" className="shrink-0"><AppNav active={active} /></div>
+        ) : (
+          <Legacy id="nav" html={legacy.nav({ active })} className="shrink-0" />
+        )}
         <main className="min-w-0 flex-1">
-          {page === "payouts" && <Payouts />}
-          {page === "create" && <CreatePayment />}
+          {page === "payouts" && (brand === "partner" ? <PayoutsReact /> : <PayoutsLegacy />)}
+          {page === "create" && (brand === "partner" ? <CreatePaymentReact /> : <CreatePaymentLegacy />)}
           {page === "components" && <Components />}
         </main>
       </div>

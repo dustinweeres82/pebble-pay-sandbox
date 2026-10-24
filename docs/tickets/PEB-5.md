@@ -3,17 +3,15 @@
 Base branch: main (after PEB-4 is merged)
 
 ## Why
-Step 3 of 3, continued: the second page.
+Step 3 of 3, continued: the second page moves Pebble onto `src/pages/CreatePaymentReact.jsx`,
+which Partner already uses.
 
 ## Do
-- In `src/pages/CreatePayment.jsx`, rebuild the `header`, `alert`, `form`, `actions` and `support` sections with
-  `src/components/ui` (Button, Alert `variant="info"`, Input, NativeSelect, Textarea, Label).
-  Keep each section's `data-testid` and its content. Help text under a field: `text-sm text-muted-foreground`.
-  - Breadcrumb: a small `Button variant="link"` back to `#payouts`, above a `text-2xl font-semibold` title.
-  - Disabled "Workplace" field: `<Input disabled />`.
-  - Support: a `bg-card` bordered block with the title, text and a default Button.
-  - "Cancel" (`Button variant="ghost"`) goes back to `#payouts`.
-- Don't edit `src/legacy/templates.js` (the nav still uses it) or any component's look.
+- In `src/App.jsx`, render `<CreatePaymentReact />` for every brand on the `create` page.
+- Delete `src/pages/CreatePaymentLegacy.jsx`.
+- Fix anything that looks off in Pebble with tokens or variants only. Keep every `data-testid` and the content.
+- Don't edit `src/legacy/templates.js` (the nav still uses it).
 
 ## Done when
-- Visual diff: every `create-*` screenshot except `create-nav` changes, in every brand and mode. Nothing else changes.
+- Visual diff: Pebble's `create-header`, `create-alert`, `create-form`, `create-actions` and `create-support`
+  change (light and dark). Nothing changes for Partner.

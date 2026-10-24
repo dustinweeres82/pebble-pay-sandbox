@@ -1,18 +1,10 @@
 import * as legacy from "../legacy/templates"
 import { Legacy } from "../shell"
+import { payouts, STATUS_LABEL } from "./data"
 
-// Off-cycle payouts (list). Every section starts on the legacy templates.
-// Step 3 tickets port these sections to src/components/ui, one page per ticket.
+// Off-cycle payouts on the legacy templates. Pebble renders this until PEB-4,
+// which moves Pebble onto PayoutsReact.jsx (the version Partner already uses) and deletes this file.
 
-const payouts = [
-  ["2026-09-28", "William Jones", "Missing hours", "$156", "Instant deposit", "$0.00", "completed"],
-  ["2026-09-15", "Cara Larson", "Bonus pay", "$111", "Instant deposit", "$0.00", "completed"],
-  ["2026-08-05", "William Jones", "Bonus pay", "$111", "", "", "processing"],
-  ["2026-07-28", "William Jones", "Emergency pay", "$222", "", "", "processing"],
-  ["2026-07-27", "William Jones", "Correction pay", "$123", "", "", "processing"],
-  ["2026-07-27", "Sally Jenkins", "Bonus pay", "$111", "", "", "failed"],
-]
-const STATUS_LABEL = { completed: "Completed", processing: "Processing", failed: "Failed" }
 
 const header = `<div class="flex flex-wrap items-center gap-4">
   ${legacy.titleText({ text: "Off-cycle payouts" })}
@@ -43,7 +35,7 @@ const table = legacy.table({
   ]),
 })
 
-export default function Payouts() {
+export default function PayoutsLegacy() {
   return (
     <div className="flex flex-col gap-9 px-10 py-9">
       <Legacy id="header" html={header} />

@@ -4,8 +4,7 @@ Base branch: main (after PEB-1 is merged)
 
 ## Why
 Step 1 of 3, continued. Today a color, dark-mode or brand change has to be repeated in every
-legacy template. After this, it's made once in the theme, and the Partner brand reaches the
-legacy templates too.
+legacy template. After this, it's made once in the theme, the same way the React components already work.
 
 ## Do
 - In `src/legacy/templates.js`, replace every palette class and `dark:` variant with semantic tokens:
@@ -24,6 +23,5 @@ legacy templates too.
 
 ## Done when
 - `src/legacy/` has no palette classes and no `dark:`.
-- Visual diff: **0 Pebble screenshots changed.** Partner · payouts-\* and create-\* change, and the
-  nav changes on every page (expected: the stock-shadcn colors now reach the legacy templates).
-  Nothing in `components-*` changes except the nav.
+- Visual diff: **0 of 68 screenshots changed.** Pebble's legacy pages look exactly the same, and
+  Partner doesn't use the legacy templates (it renders the React pages).
