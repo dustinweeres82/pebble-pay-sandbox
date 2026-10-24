@@ -68,7 +68,7 @@ export default async function handler(req, res) {
     // 3. Tickets.
     const issues = (await gh("GET", "/issues?state=all&per_page=100")).filter((i) => !i.pull_request)
     for (const i of issues) {
-      const isTicket = TICKET.test(i.title) || /Ticket:\s*PEB-\d+/.test(i.body || "") || /linear\.app\/[^\s]*\/issue\/PEB-\d+/i.test(i.body || "")
+      const isTicket = TICKET.test(i.title) || /Ticket:\s*`?PEB-\d+/.test(i.body || "") || /linear\.app\/[^\s]*\/issue\/PEB-\d+/i.test(i.body || "")
       const labelled = i.labels.some((l) => l.name === "agent")
       // Leave issues closed as duplicates or "not planned" alone (old copies of a ticket, past requests).
       if (i.state === "closed" && ["duplicate", "not_planned"].includes(i.state_reason)) continue

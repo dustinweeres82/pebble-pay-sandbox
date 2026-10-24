@@ -244,13 +244,13 @@ async function apiWrite(method, path, body) {
 /* ---------------- Find the pieces of one run ---------------- */
 // A run is keyed by issue number ("12") or, for issues started while signed out, by ticket ID ("REQ-1234").
 function ticketId(issue) {
-  const t = issue.title.match(/^([A-Z][A-Z0-9]+-\d+)\b/), b = (issue.body || "").match(/Ticket:\s*([A-Z][A-Z0-9]+-\d+)/),
+  const t = issue.title.match(/^([A-Z][A-Z0-9]+-\d+)\b/), b = (issue.body || "").match(/Ticket:\s*`?([A-Z][A-Z0-9]+-\d+)/),
     l = (issue.body || "").match(/linear\.app\/[^/\s]+\/issue\/([A-Z][A-Z0-9]+-\d+)/i);
   return (t || b || l || [])[1] || null;
 }
 function linearURL(issue) { const m = (issue.body || "").match(/https:\/\/linear\.app\/[^\s)\]]+/); return m ? m[0] : null; }
 function matchesTicket(issue, id) {
-  return issue.title.startsWith(id + " ") || issue.title === id || (issue.body || "").includes(`Ticket: ${id}`);
+  return issue.title.startsWith(id + " ") || issue.title === id || new RegExp("Ticket:\\s*`?" + id + "\\b").test(issue.body || "");
 }
 const frozen = {}; // parts of a run that can't change any more, so we stop asking GitHub for them
 async function liveModel(key, startedAt) {

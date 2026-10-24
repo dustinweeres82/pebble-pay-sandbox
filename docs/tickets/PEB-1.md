@@ -18,7 +18,7 @@ what they render today.
     `field-placeholder` stone-500 → stone-500, `field-help` stone-500 → stone-400
   - `sidebar` ocean-900 → stone-900, `sidebar-foreground` white → white, `sidebar-muted` stone-300 → stone-300,
     `sidebar-primary` ocean-400 → ocean-400, `sidebar-accent` white at 10% → white at 10%,
-    `sidebar-border` white at 15% → white at 15% (use `color-mix(in srgb, var(--color-white) 10%, transparent)`)
+    `sidebar-border` white at 15% → white at 15% (write the white-at-N% values as `color-mix(in srgb, var(--color-white) N%, transparent)`)
 - Map each in `src/styles/shadcn_base.css` (`@theme inline`). For every role Partner doesn't define,
   add a fallback derived from shadcn roles in a `@layer base` block, so Partner still resolves it.
   Partner already defines the `sidebar-*` roles.
